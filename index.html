@@ -164,6 +164,15 @@
       .search-btn { width: 100%; }
       .stats-grid { grid-template-columns: repeat(2,1fr); }
     }
+    .lb-min-controls { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; margin-top: 6px; }
+    .lb-min-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text2); cursor: pointer; font-size: 0.68rem; font-weight: 600; padding: 2px 8px; transition: all 0.12s; }
+    .lb-min-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .lb-min-btn:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+    .lb-min-input { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 0.68rem; padding: 2px 7px; width: 52px; outline: none; }
+    .lb-min-input:focus { border-color: var(--accent); }
+    .lb-expand-btn { background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); cursor: pointer; font-size: 0.72rem; font-weight: 600; padding: 4px 14px; transition: all 0.12s; width: 100%; margin-top: 2px; }
+    .lb-expand-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .lb-expand-wrap { padding: 4px 12px 8px; }
   </style>
 </head>
 <body>
@@ -205,7 +214,17 @@
       <div class="lb-header">
         <h2>&#127942; Search Leaderboard</h2>
         <p>Funniest acceptance rates found so far</p>
-        <div class="lb-min-note">Only keywords with &ge;80 matching papers count</div>
+        <div class="lb-min-note" id="lb-min-note">Only keywords with &ge;80 matching papers count</div>
+        <div class="lb-min-controls">
+          <span style="font-size:0.68rem;color:var(--text2);">Min:</span>
+          <button class="lb-min-btn" data-min="50"  onclick="setMinTotal(50)">50</button>
+          <button class="lb-min-btn active" data-min="80" onclick="setMinTotal(80)">80</button>
+          <button class="lb-min-btn" data-min="100" onclick="setMinTotal(100)">100</button>
+          <button class="lb-min-btn" data-min="200" onclick="setMinTotal(200)">200</button>
+          <button class="lb-min-btn" data-min="500" onclick="setMinTotal(500)">500</button>
+          <input class="lb-min-input" type="number" min="1" placeholder="自定义"
+            onchange="setMinTotal(+this.value||80)">
+        </div>
       </div>
 
       <!-- L1: metric tabs -->
@@ -232,6 +251,7 @@
       <div class="lb-body" id="lb-body">
         <div class="lb-loading"><span class="spinner"></span></div>
       </div>
+      <div class="lb-expand-wrap" id="lb-expand-wrap"></div>
     </div>
   </div>
 </div>
@@ -260,6 +280,8 @@ let LB_DATA    = null;   // cached leaderboard response
 let lbL1 = "accept";   // "accept" | "oral"
 let lbL2 = "all";      // "all" | "title" | "abstract" | "keywords" | "tldr"
 let lbL3 = "high";     // "high" | "low"  (only for accept)
+let lbMinTotal  = 80;
+let lbShowCount = 10;
 
 // ── Data ─────────────────────────────────────────────────────────────────
 async function loadData() {
@@ -314,6 +336,7 @@ function setL1(val) {
     t.classList.toggle("active", (i===0 && val==="accept") || (i===1 && val==="oral"));
   });
   document.getElementById("lb-l3-wrap").style.display = "flex";
+  lbShowCount = 10;
   renderLb();
 }
 
@@ -322,6 +345,7 @@ function setL2(val) {
   document.querySelectorAll(".lb-l2-tab").forEach(function(t) {
     t.classList.toggle("active", t.dataset.l2 === val);
   });
+  lbShowCount = 10;
   renderLb();
 }
 
@@ -331,15 +355,41 @@ function setL3(val) {
     var isHigh = t.classList.contains("high");
     t.classList.toggle("active", (isHigh && val==="high") || (!isHigh && val==="low"));
   });
+  lbShowCount = 10;
+  renderLb();
+}
+
+function setMinTotal(val) {
+  if (!val || val < 1) return;
+  lbMinTotal  = val;
+  lbShowCount = 10;
+  document.querySelectorAll(".lb-min-btn").forEach(function(b) {
+    b.classList.toggle("active", +b.dataset.min === val);
+  });
+  document.getElementById("lb-min-note").innerHTML =
+    "Only keywords with &ge;" + val + " matching papers count";
+  fetchLeaderboard();
+}
+
+function expandLb() {
+  lbShowCount = lbShowCount < 20 ? 20 : 50;
+  renderLb();
+}
+
+function collapseLb() {
+  lbShowCount = 10;
   renderLb();
 }
 
 function renderLb() {
-  var body = document.getElementById("lb-body");
-  if (!LB_DATA) { body.innerHTML = '<div class="lb-loading"><span class="spinner"></span></div>'; return; }
+  var body       = document.getElementById("lb-body");
+  var expandWrap = document.getElementById("lb-expand-wrap");
+  function clearExpand() { if (expandWrap) expandWrap.innerHTML = ""; }
+
+  if (!LB_DATA) { body.innerHTML = '<div class="lb-loading"><span class="spinner"></span></div>'; clearExpand(); return; }
 
   var group = LB_DATA.leaderboards && LB_DATA.leaderboards[lbL2];
-  if (!group) { body.innerHTML = '<div class="lb-empty">No data</div>'; return; }
+  if (!group) { body.innerHTML = '<div class="lb-empty">No data</div>'; clearExpand(); return; }
 
   var rows;
   var isOral = lbL1 === "oral";
@@ -351,13 +401,14 @@ function renderLb() {
 
   if (!rows.length) {
     body.innerHTML = '<div class="lb-empty">No results yet &mdash; be the first!</div>';
-    return;
+    clearExpand(); return;
   }
 
-  var medals = ["&#129351;","&#129352;","&#129353;"];
-  var isHigh = lbL3 === "high";
+  var medals      = ["&#129351;","&#129352;","&#129353;"];
+  var isHigh      = lbL3 === "high";
+  var displayRows = rows.slice(0, lbShowCount);
 
-  body.innerHTML = rows.map(function(r, i) {
+  body.innerHTML = displayRows.map(function(r, i) {
     var rankCls  = RANK_CLASS[i] || "";
     var rankMark = medals[i] || (i+1);
     var pct      = isOral
@@ -379,6 +430,17 @@ function renderLb() {
       '<div class="lb-pct ' + pctClass + '">' + pct + '%</div>' +
     '</div>';
   }).join("");
+
+  if (expandWrap) {
+    if (rows.length > lbShowCount) {
+      var nextCount = lbShowCount < 20 ? 20 : 50;
+      expandWrap.innerHTML = '<button class="lb-expand-btn" onclick="expandLb()">Show top ' + nextCount + ' &#9660;</button>';
+    } else if (lbShowCount > 10) {
+      expandWrap.innerHTML = '<button class="lb-expand-btn" onclick="collapseLb()">&#9650; Collapse to top 10</button>';
+    } else {
+      expandWrap.innerHTML = "";
+    }
+  }
 }
 
 async function fetchLeaderboard() {
@@ -388,8 +450,9 @@ async function fetchLeaderboard() {
     return;
   }
   try {
-    var resp = await fetch(APPS_SCRIPT_URL + "?action=leaderboard");
+    var resp = await fetch(APPS_SCRIPT_URL + "?action=leaderboard&min_total=" + lbMinTotal);
     LB_DATA  = await resp.json();
+    lbShowCount = 10;
     if (LB_DATA.ok) {
       renderLb();
       if (LB_DATA.stats) { updatePvBadge(LB_DATA.stats); }
