@@ -64,12 +64,25 @@
     }
     .hero .badge span { color: var(--accent); font-weight: 600; }
 
-    /* ── Search area ── */
-    .search-wrap {
-      max-width: 760px;
-      margin: 36px auto 0;
-      padding: 0 16px;
+    /* ── Layout: search + leaderboard side by side ── */
+    .page-body {
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 16px 60px;
     }
+    .left-col { flex: 1; min-width: 0; }
+    .right-col { width: 300px; flex-shrink: 0; }
+
+    @media (max-width: 860px) {
+      .page-body { flex-direction: column; }
+      .right-col { width: 100%; }
+    }
+
+    /* ── Search area ── */
+    .search-wrap { margin-bottom: 28px; }
     .search-row {
       display: flex;
       gap: 10px;
@@ -112,11 +125,7 @@
       flex-wrap: wrap;
       align-items: center;
     }
-    .field-label {
-      color: var(--text2);
-      font-size: 0.85rem;
-      margin-right: 4px;
-    }
+    .field-label { color: var(--text2); font-size: 0.85rem; margin-right: 4px; }
     .field-toggle {
       background: var(--surface);
       border: 1.5px solid var(--border);
@@ -133,13 +142,6 @@
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
-    }
-
-    /* ── Main content ── */
-    .main {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 32px 16px 60px;
     }
 
     /* ── Loading / status ── */
@@ -167,11 +169,9 @@
       align-items: baseline;
       gap: 12px;
       margin-bottom: 24px;
+      flex-wrap: wrap;
     }
-    .result-header h2 {
-      font-size: 1.25rem;
-      font-weight: 700;
-    }
+    .result-header h2 { font-size: 1.25rem; font-weight: 700; }
     .result-header .count-badge {
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -185,41 +185,32 @@
     /* ── Stats grid ── */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 14px;
-      margin-bottom: 28px;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
     }
     .stat-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 18px 20px;
+      padding: 16px 18px;
       transition: border-color 0.2s;
     }
     .stat-card:hover { border-color: var(--accent); }
     .stat-card .label {
       color: var(--text2);
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       font-weight: 500;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       margin-bottom: 8px;
     }
-    .stat-card .value {
-      font-size: 1.7rem;
-      font-weight: 800;
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-    .stat-card .sub {
-      color: var(--text2);
-      font-size: 0.8rem;
-    }
-    .stat-card.oral .value { color: #fbbf24; }
-    .stat-card.spotlight .value { color: var(--accent2); }
-    .stat-card.poster .value { color: var(--green); }
-    .stat-card.accept .value { color: var(--green); }
-    .stat-card.reject .value { color: var(--red); }
+    .stat-card .value { font-size: 1.6rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+    .stat-card .sub   { color: var(--text2); font-size: 0.78rem; }
+    .stat-card.oral .value     { color: #fbbf24; }
+    .stat-card.spotlight .value{ color: var(--accent2); }
+    .stat-card.accept .value   { color: var(--green); }
+    .stat-card.reject .value   { color: var(--red); }
     .stat-card.withdraw .value { color: var(--gray); }
 
     /* ── Breakdown bar ── */
@@ -227,133 +218,147 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 22px 24px;
-      margin-bottom: 28px;
+      padding: 20px 22px;
+      margin-bottom: 24px;
     }
     .breakdown h3 {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text2);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 16px;
+      font-size: 0.85rem; font-weight: 600; color: var(--text2);
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px;
     }
-    .bar-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
+    .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
     .bar-row:last-child { margin-bottom: 0; }
-    .bar-name {
-      width: 90px;
-      font-size: 0.85rem;
-      color: var(--text);
-      flex-shrink: 0;
-    }
-    .bar-track {
-      flex: 1;
-      background: var(--surface2);
-      border-radius: 4px;
-      height: 8px;
-      overflow: hidden;
-    }
-    .bar-fill {
-      height: 100%;
-      border-radius: 4px;
-      transition: width 0.6s cubic-bezier(.4,0,.2,1);
-    }
-    .bar-fill.oral    { background: #fbbf24; }
-    .bar-fill.spotlight { background: var(--accent2); }
-    .bar-fill.poster  { background: var(--green); }
-    .bar-fill.reject  { background: var(--red); }
-    .bar-fill.withdraw { background: #64748b; }
+    .bar-name { width: 88px; font-size: 0.83rem; color: var(--text); flex-shrink: 0; }
+    .bar-track { flex: 1; background: var(--surface2); border-radius: 4px; height: 8px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s cubic-bezier(.4,0,.2,1); }
+    .bar-fill.oral       { background: #fbbf24; }
+    .bar-fill.spotlight  { background: var(--accent2); }
+    .bar-fill.poster     { background: var(--green); }
+    .bar-fill.reject     { background: var(--red); }
+    .bar-fill.withdraw   { background: #64748b; }
     .bar-fill.deskreject { background: #475569; }
-    .bar-info {
-      width: 110px;
-      text-align: right;
-      font-size: 0.82rem;
-      color: var(--text2);
-      flex-shrink: 0;
-    }
+    .bar-info { width: 105px; text-align: right; font-size: 0.8rem; color: var(--text2); flex-shrink: 0; }
 
     /* ── Paper list ── */
-    .papers-section h3 {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 14px;
-      color: var(--text);
-    }
+    .papers-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: var(--text); }
     .paper-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 16px 20px;
-      margin-bottom: 10px;
+      padding: 14px 18px;
+      margin-bottom: 9px;
       transition: border-color 0.2s, transform 0.1s;
     }
-    .paper-card:hover {
-      border-color: var(--accent);
-      transform: translateY(-1px);
-    }
-    .paper-card a {
-      text-decoration: none;
-      color: inherit;
-      display: block;
-    }
-    .paper-top {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 6px;
-    }
+    .paper-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .paper-card a { text-decoration: none; color: inherit; display: block; }
+    .paper-top { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 5px; }
     .status-pill {
-      border-radius: 6px;
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      padding: 3px 9px;
-      flex-shrink: 0;
-      text-transform: uppercase;
+      border-radius: 6px; font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.04em; padding: 3px 8px; flex-shrink: 0; text-transform: uppercase;
     }
-    .pill-oral     { background: rgba(251,191,36,0.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
-    .pill-spotlight{ background: rgba(167,139,250,0.15); color: var(--accent2); border: 1px solid rgba(167,139,250,0.3); }
-    .pill-poster   { background: rgba(52,211,153,0.12);  color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
-    .paper-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text);
-      line-height: 1.4;
-    }
-    .paper-meta {
-      display: flex;
-      gap: 16px;
-      font-size: 0.78rem;
-      color: var(--text2);
-      flex-wrap: wrap;
-    }
+    .pill-oral      { background: rgba(251,191,36,0.15);  color: #fbbf24;         border: 1px solid rgba(251,191,36,0.3); }
+    .pill-spotlight { background: rgba(167,139,250,0.15); color: var(--accent2);  border: 1px solid rgba(167,139,250,0.3); }
+    .pill-poster    { background: rgba(52,211,153,0.12);  color: var(--green);    border: 1px solid rgba(52,211,153,0.25); }
+    .paper-title { font-size: 0.92rem; font-weight: 600; color: var(--text); line-height: 1.4; }
+    .paper-meta { display: flex; gap: 14px; font-size: 0.76rem; color: var(--text2); flex-wrap: wrap; }
     .paper-meta span { display: flex; align-items: center; gap: 4px; }
 
-    /* ── Footer ── */
-    .footer {
+    /* ── Leaderboard ── */
+    .leaderboard {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: sticky;
+      top: 20px;
+    }
+    .lb-header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    .lb-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .lb-header p { font-size: 0.76rem; color: var(--text2); }
+
+    .lb-section { padding: 14px 18px; }
+    .lb-section + .lb-section { border-top: 1px solid var(--border); }
+    .lb-section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .lb-section-title.top { color: var(--green); }
+    .lb-section-title.bottom { color: var(--red); }
+
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.12s;
+      border-radius: 6px;
+      padding: 6px 6px;
+      margin: 0 -6px;
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-row:hover { background: var(--surface2); }
+
+    .lb-rank {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text2);
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .lb-rank.gold   { color: #fbbf24; }
+    .lb-rank.silver { color: #94a3b8; }
+    .lb-rank.bronze { color: #c97c41; }
+
+    .lb-kw {
+      flex: 1;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .lb-pct {
+      font-size: 0.85rem;
+      font-weight: 800;
+      flex-shrink: 0;
+    }
+    .lb-pct.high { color: var(--green); }
+    .lb-pct.low  { color: var(--red); }
+
+    .lb-empty {
       text-align: center;
       color: var(--text2);
-      font-size: 0.78rem;
-      padding: 24px;
-      border-top: 1px solid var(--border);
+      font-size: 0.82rem;
+      padding: 16px 0;
     }
-    .footer a { color: var(--accent); text-decoration: none; }
+
+    .lb-loading { text-align: center; padding: 12px; color: var(--text2); font-size: 0.82rem; }
 
     /* ── Empty state ── */
-    .empty {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text2);
-    }
+    .empty { text-align: center; padding: 60px 20px; color: var(--text2); }
     .empty .icon { font-size: 3rem; margin-bottom: 12px; }
     .empty p { font-size: 1rem; }
 
-    /* ── Responsive ── */
+    /* ── Footer ── */
+    .footer {
+      text-align: center; color: var(--text2); font-size: 0.78rem;
+      padding: 24px; border-top: 1px solid var(--border);
+    }
+    .footer a { color: var(--accent); text-decoration: none; }
+
     @media (max-width: 500px) {
       .search-row { flex-direction: column; }
       .search-btn { width: 100%; }
@@ -370,33 +375,62 @@
   <div class="badge">Total submissions: <span id="total-badge">loading…</span></div>
 </div>
 
-<!-- Search -->
-<div class="search-wrap">
-  <div class="search-row">
-    <input
-      class="search-input"
-      id="query"
-      type="text"
-      placeholder='e.g.  attack   "large language model"   diffusion'
-      autofocus
-    />
-    <button class="search-btn" id="search-btn" onclick="doSearch()">Search</button>
-  </div>
-  <div class="field-row">
-    <span class="field-label">Search in:</span>
-    <button class="field-toggle active" data-field="title"    onclick="toggleField(this)">Title</button>
-    <button class="field-toggle"        data-field="abstract" onclick="toggleField(this)">Abstract</button>
-    <button class="field-toggle"        data-field="keywords" onclick="toggleField(this)">Keywords</button>
-    <button class="field-toggle"        data-field="tldr"     onclick="toggleField(this)">TL;DR</button>
-  </div>
-</div>
+<!-- Page body: left (search+results) + right (leaderboard) -->
+<div class="page-body">
 
-<!-- Main -->
-<div class="main" id="main">
-  <div class="status-bar" id="status">
-    <span class="spinner"></span> Loading paper data…
+  <!-- ── Left column ── -->
+  <div class="left-col">
+
+    <!-- Search -->
+    <div class="search-wrap">
+      <div class="search-row">
+        <input
+          class="search-input"
+          id="query"
+          type="text"
+          placeholder='e.g.  attack   "large language model"   diffusion'
+          autofocus
+        />
+        <button class="search-btn" id="search-btn" onclick="doSearch()">Search</button>
+      </div>
+      <div class="field-row">
+        <span class="field-label">Search in:</span>
+        <button class="field-toggle active" data-field="title"    onclick="toggleField(this)">Title</button>
+        <button class="field-toggle"        data-field="abstract" onclick="toggleField(this)">Abstract</button>
+        <button class="field-toggle"        data-field="keywords" onclick="toggleField(this)">Keywords</button>
+        <button class="field-toggle"        data-field="tldr"     onclick="toggleField(this)">TL;DR</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="main">
+      <div class="status-bar" id="status">
+        <span class="spinner"></span> Loading paper data…
+      </div>
+    </div>
   </div>
-</div>
+
+  <!-- ── Right column: Leaderboard ── -->
+  <div class="right-col">
+    <div class="leaderboard">
+      <div class="lb-header">
+        <h2>🏆 Search Leaderboard</h2>
+        <p>Funniest acceptance rates found so far</p>
+      </div>
+
+      <div class="lb-section">
+        <div class="lb-section-title top">🚀 Highest Acceptance</div>
+        <div id="lb-high"><div class="lb-loading"><span class="spinner"></span></div></div>
+      </div>
+
+      <div class="lb-section">
+        <div class="lb-section-title bottom">💀 Lowest Acceptance</div>
+        <div id="lb-low"><div class="lb-loading"><span class="spinner"></span></div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end page-body -->
 
 <!-- Footer -->
 <div class="footer">
@@ -407,20 +441,17 @@
 </div>
 
 <script>
-const DATA_URL = "https://raw.githubusercontent.com/papercopilot/paperlists/main/iclr/iclr2026.json";
+// ── CONFIG — paste your Apps Script URL here after deploying ──────────────
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbX93GzLWrP9QWsVxBG3htSOPyCW0DtL_H6ejKBuFaMHucZ8-M5Z_9GWfo0nTJDzCQnA/exec";
+
+const DATA_URL     = "https://raw.githubusercontent.com/papercopilot/paperlists/main/iclr/iclr2026.json";
 const STATUS_ORDER = ["Oral", "Spotlight", "Poster", "Reject", "Withdraw", "Desk Reject"];
 const ACCEPT_SET   = new Set(["oral", "spotlight", "poster"]);
-const STATUS_CLASS = {
-  "Oral": "oral", "Spotlight": "spotlight", "Poster": "poster",
-  "Reject": "reject", "Withdraw": "withdraw", "Desk Reject": "deskreject"
-};
-const PILL_CLASS = {
-  "Oral": "pill-oral", "Spotlight": "pill-spotlight", "Poster": "pill-poster"
-};
+const PILL_CLASS   = { "Oral": "pill-oral", "Spotlight": "pill-spotlight", "Poster": "pill-poster" };
 
 let ALL_PAPERS = null;
 
-// ── Load data ──────────────────────────────────────────────────────────────
+// ── Load paper data ────────────────────────────────────────────────────────
 async function loadData() {
   try {
     const resp = await fetch(DATA_URL);
@@ -432,57 +463,115 @@ async function loadData() {
       `<span style="color:var(--green)">✓</span> Data loaded — ${ALL_PAPERS.length.toLocaleString()} papers. Type a keyword and search!`;
   } catch (e) {
     document.getElementById("status").innerHTML =
-      `<span style="color:var(--red)">✗ Failed to load data: ${e.message}</span><br>
-       <span style="font-size:0.82rem;color:var(--text2)">Try refreshing. If this persists, GitHub may be rate-limiting.</span>`;
+      `<span style="color:var(--red)">✗ Failed to load data: ${e.message}</span>`;
   }
+}
+
+// ── Leaderboard ────────────────────────────────────────────────────────────
+const RANK_CLASS = ["gold", "silver", "bronze"];
+const RANK_EMOJI = ["🥇", "🥈", "🥉"];
+
+function renderLbRows(containerId, rows, isHigh) {
+  const el = document.getElementById(containerId);
+  if (!rows || rows.length === 0) {
+    el.innerHTML = `<div class="lb-empty">No searches yet — be the first!</div>`;
+    return;
+  }
+  el.innerHTML = rows.map((r, i) => {
+    const rankCls  = RANK_CLASS[i] || "";
+    const rankMark = RANK_EMOJI[i] || `${i+1}`;
+    const pct      = Number(r.accept_pct).toFixed(1);
+    const kw       = r.keyword.length > 20 ? r.keyword.slice(0, 18) + "…" : r.keyword;
+    return `
+    <div class="lb-row" onclick="fillSearch('${r.keyword.replace(/'/g,"\\'")}', '${r.fields}')"
+         title="Click to search: ${r.keyword} (${r.fields}) — ${r.total} papers">
+      <div class="lb-rank ${rankCls}">${rankMark}</div>
+      <div class="lb-kw">${kw}</div>
+      <div class="lb-pct ${isHigh ? 'high' : 'low'}">${pct}%</div>
+    </div>`;
+  }).join("");
+}
+
+async function fetchLeaderboard() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_URL_HERE") {
+    document.getElementById("lb-high").innerHTML =
+      `<div class="lb-empty">⚙️ Leaderboard not configured yet.</div>`;
+    document.getElementById("lb-low").innerHTML =
+      `<div class="lb-empty">Add your Apps Script URL to enable.</div>`;
+    return;
+  }
+  try {
+    const url  = `${APPS_SCRIPT_URL}?action=leaderboard`;
+    const resp = await fetch(url);
+    const data = await resp.json();
+    if (data.ok) {
+      renderLbRows("lb-high", data.highest, true);
+      renderLbRows("lb-low",  data.lowest,  false);
+    }
+  } catch (e) {
+    document.getElementById("lb-high").innerHTML =
+      `<div class="lb-empty" style="color:var(--red)">Failed to load</div>`;
+    document.getElementById("lb-low").innerHTML = "";
+  }
+}
+
+async function recordSearch(keyword, fields, total, accepted, acceptPct, oral, oralPct) {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_URL_HERE") return;
+  try {
+    const params = new URLSearchParams({
+      action: "record", keyword, fields,
+      total, accepted, accept_pct: acceptPct,
+      oral, oral_pct: oralPct
+    });
+    await fetch(`${APPS_SCRIPT_URL}?${params}`);
+    // Refresh leaderboard after recording
+    setTimeout(fetchLeaderboard, 800);
+  } catch (_) { /* silently fail */ }
+}
+
+// Click a leaderboard row to fill the search box and re-run
+function fillSearch(keyword, fields) {
+  document.getElementById("query").value = keyword;
+  // Activate the right field toggles
+  const fieldList = fields.split(",").map(f => f.trim());
+  document.querySelectorAll(".field-toggle").forEach(btn => {
+    btn.classList.toggle("active", fieldList.includes(btn.dataset.field));
+  });
+  doSearch();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // ── Field toggles ──────────────────────────────────────────────────────────
 function toggleField(btn) {
-  // At least one must remain active
   const active = document.querySelectorAll(".field-toggle.active");
   if (btn.classList.contains("active") && active.length === 1) return;
   btn.classList.toggle("active");
 }
-
 function getActiveFields() {
-  return [...document.querySelectorAll(".field-toggle.active")]
-    .map(b => b.dataset.field);
+  return [...document.querySelectorAll(".field-toggle.active")].map(b => b.dataset.field);
 }
 
 // ── Normalize status ───────────────────────────────────────────────────────
 function normalizeStatus(raw) {
   if (!raw) return "Unknown";
-  const s = raw.trim();
-  const low = s.toLowerCase();
-  for (const canonical of STATUS_ORDER) {
-    if (canonical.toLowerCase() === low) return canonical;
-  }
-  for (const canonical of STATUS_ORDER) {
-    if (low.includes(canonical.toLowerCase())) return canonical;
-  }
-  return s;
+  const low = raw.trim().toLowerCase();
+  for (const c of STATUS_ORDER) if (c.toLowerCase() === low) return c;
+  for (const c of STATUS_ORDER) if (low.includes(c.toLowerCase())) return c;
+  return raw.trim();
 }
 
 // ── Search ─────────────────────────────────────────────────────────────────
 function doSearch() {
-  if (!ALL_PAPERS) {
-    alert("Data still loading, please wait a moment.");
-    return;
-  }
+  if (!ALL_PAPERS) { alert("Data still loading, please wait."); return; }
   const raw = document.getElementById("query").value.trim();
   if (!raw) return;
 
-  // Parse quoted phrases and bare words
   const keywords = [];
   const re = /"([^"]+)"|(\S+)/g;
   let m;
-  while ((m = re.exec(raw)) !== null) {
-    keywords.push((m[1] || m[2]).toLowerCase());
-  }
+  while ((m = re.exec(raw)) !== null) keywords.push((m[1] || m[2]).toLowerCase());
 
-  const fields = getActiveFields();
-
+  const fields  = getActiveFields();
   const matched = ALL_PAPERS.filter(p => {
     const text = fields.map(f => (p[f] || "")).join(" ").toLowerCase();
     return keywords.some(kw => text.includes(kw));
@@ -491,63 +580,59 @@ function doSearch() {
   renderResults(matched, keywords, fields);
 }
 
-// Enter key
 document.getElementById("query").addEventListener("keydown", e => {
   if (e.key === "Enter") doSearch();
 });
 
-// ── Render ─────────────────────────────────────────────────────────────────
+// ── Render results ─────────────────────────────────────────────────────────
 function renderResults(papers, keywords, fields) {
   const main = document.getElementById("main");
   if (papers.length === 0) {
-    main.innerHTML = `
-      <div class="empty">
-        <div class="icon">🔍</div>
-        <p>No papers found for <strong>"${keywords.join(" / ")}"</strong> in ${fields.join(", ")}.</p>
-      </div>`;
+    main.innerHTML = `<div class="empty"><div class="icon">🔍</div>
+      <p>No papers found for <strong>"${keywords.join(" / ")}"</strong> in ${fields.join(", ")}.</p></div>`;
     return;
   }
 
-  // Count by status
   const counts = {};
   for (const s of STATUS_ORDER) counts[s] = 0;
-  counts["Unknown"] = 0;
-  for (const p of papers) {
-    const s = normalizeStatus(p.status);
-    counts[s] = (counts[s] || 0) + 1;
-  }
+  for (const p of papers) { const s = normalizeStatus(p.status); counts[s] = (counts[s]||0)+1; }
 
-  const total    = papers.length;
-  const accepted = ["Oral","Spotlight","Poster"].reduce((a,s) => a + (counts[s]||0), 0);
-  const oral     = counts["Oral"] || 0;
-  const spotlight= counts["Spotlight"] || 0;
-  const poster   = counts["Poster"] || 0;
-  const reject   = counts["Reject"] || 0;
-  const withdraw = counts["Withdraw"] || 0;
-  const desk     = counts["Desk Reject"] || 0;
+  const total     = papers.length;
+  const accepted  = ["Oral","Spotlight","Poster"].reduce((a,s) => a+(counts[s]||0), 0);
+  const oral      = counts["Oral"]       || 0;
+  const spotlight = counts["Spotlight"]  || 0;
+  const poster    = counts["Poster"]     || 0;
+  const reject    = counts["Reject"]     || 0;
+  const withdraw  = counts["Withdraw"]   || 0;
+  const desk      = counts["Desk Reject"]|| 0;
 
-  const pct = n => total ? (n/total*100).toFixed(1)+"%" : "—";
-  const acceptPct = total ? (accepted/total*100).toFixed(1) : "—";
-  const oralPct   = accepted ? (oral/accepted*100).toFixed(1) : "—";
+  const pct       = n => total    ? (n/total*100).toFixed(1)+"%" : "—";
+  const acceptPct = total    ? +(accepted/total*100).toFixed(2) : 0;
+  const oralPct   = accepted ? +(oral/accepted*100).toFixed(2)  : 0;
   const spotPct   = accepted ? (spotlight/accepted*100).toFixed(1) : "—";
 
-  // Accepted papers sorted
+  // Record to leaderboard (fire and forget)
+  recordSearch(
+    keywords.join(" "),
+    fields.join(","),
+    total, accepted, acceptPct, oral, oralPct
+  );
+
   const acceptedPapers = papers
     .filter(p => ACCEPT_SET.has(normalizeStatus(p.status).toLowerCase()))
-    .sort((a, b) => {
+    .sort((a,b) => {
       const ai = STATUS_ORDER.indexOf(normalizeStatus(a.status));
       const bi = STATUS_ORDER.indexOf(normalizeStatus(b.status));
-      return ai !== bi ? ai - bi : (a.title || "").localeCompare(b.title || "");
+      return ai !== bi ? ai-bi : (a.title||"").localeCompare(b.title||"");
     });
 
-  // Bar rows
   const barRows = [
-    { label: "Oral",        count: oral,     cls: "oral" },
-    { label: "Spotlight",   count: spotlight, cls: "spotlight" },
-    { label: "Poster",      count: poster,   cls: "poster" },
-    { label: "Reject",      count: reject,   cls: "reject" },
-    { label: "Withdraw",    count: withdraw, cls: "withdraw" },
-    { label: "Desk Reject", count: desk,     cls: "deskreject" },
+    { label:"Oral",        count:oral,     cls:"oral" },
+    { label:"Spotlight",   count:spotlight,cls:"spotlight" },
+    { label:"Poster",      count:poster,   cls:"poster" },
+    { label:"Reject",      count:reject,   cls:"reject" },
+    { label:"Withdraw",    count:withdraw, cls:"withdraw" },
+    { label:"Desk Reject", count:desk,     cls:"deskreject" },
   ].filter(r => r.count > 0);
 
   const barsHTML = barRows.map(r => `
@@ -556,17 +641,16 @@ function renderResults(papers, keywords, fields) {
       <div class="bar-track">
         <div class="bar-fill ${r.cls}" style="width:${(r.count/total*100).toFixed(1)}%"></div>
       </div>
-      <div class="bar-info">${r.count} &nbsp;·&nbsp; ${pct(r.count)}</div>
+      <div class="bar-info">${r.count} · ${pct(r.count)}</div>
     </div>`).join("");
 
-  // Paper cards
   const cardsHTML = acceptedPapers.map(p => {
-    const status  = normalizeStatus(p.status);
-    const pill    = PILL_CLASS[status] || "pill-poster";
-    const rating  = Array.isArray(p.rating_avg) ? p.rating_avg[0] : null;
-    const area    = p.primary_area || "";
-    const site    = p.site || "#";
-    const title   = (p.title || "(no title)").replace(/</g,"&lt;");
+    const status = normalizeStatus(p.status);
+    const pill   = PILL_CLASS[status] || "pill-poster";
+    const rating = Array.isArray(p.rating_avg) ? p.rating_avg[0] : null;
+    const area   = p.primary_area || "";
+    const site   = p.site || "#";
+    const title  = (p.title||"(no title)").replace(/</g,"&lt;");
     return `
     <div class="paper-card">
       <a href="${site}" target="_blank" rel="noopener">
@@ -582,16 +666,15 @@ function renderResults(papers, keywords, fields) {
     </div>`;
   }).join("");
 
-  const kwLabel = keywords.map(k => `"${k}"`).join(" or ");
+  const kwLabel    = keywords.map(k=>`"${k}"`).join(" or ");
   const fieldLabel = fields.join(" + ");
 
   main.innerHTML = `
     <div class="result-header">
       <h2>Results for ${kwLabel}</h2>
-      <span class="count-badge">${total.toLocaleString()} papers · searched in ${fieldLabel}</span>
+      <span class="count-badge">${total.toLocaleString()} papers · in ${fieldLabel}</span>
     </div>
 
-    <!-- Key stats cards -->
     <div class="stats-grid">
       <div class="stat-card accept">
         <div class="label">Acceptance Rate</div>
@@ -620,13 +703,11 @@ function renderResults(papers, keywords, fields) {
       </div>
     </div>
 
-    <!-- Breakdown bar -->
     <div class="breakdown">
       <h3>Status Breakdown</h3>
       ${barsHTML}
     </div>
 
-    <!-- Accepted paper list -->
     ${acceptedPapers.length > 0 ? `
     <div class="papers-section">
       <h3>Accepted Papers (${acceptedPapers.length})</h3>
@@ -637,6 +718,9 @@ function renderResults(papers, keywords, fields) {
 
 // ── Boot ───────────────────────────────────────────────────────────────────
 loadData();
+fetchLeaderboard();
+// Refresh leaderboard every 30s
+setInterval(fetchLeaderboard, 30000);
 </script>
 </body>
 </html>
