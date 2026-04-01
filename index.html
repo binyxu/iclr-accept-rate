@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ICLR 2026 Paper Stats</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3350;
+      --accent: #6c8fff;
+      --accent2: #a78bfa;
+      --green: #34d399;
+      --yellow: #fbbf24;
+      --red: #f87171;
+      --gray: #8892b0;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+    }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1a1d27 0%, #0f1117 60%);
+      border-bottom: 1px solid var(--border);
+      padding: 48px 24px 40px;
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
+    }
+    .hero p {
+      color: var(--text2);
+      font-size: 1rem;
+      max-width: 520px;
+      margin: 0 auto 8px;
+    }
+    .hero .badge {
+      display: inline-block;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.78rem;
+      color: var(--text2);
+      margin-top: 10px;
+    }
+    .hero .badge span { color: var(--accent); font-weight: 600; }
+
+    /* ── Search area ── */
+    .search-wrap {
+      max-width: 760px;
+      margin: 36px auto 0;
+      padding: 0 16px;
+    }
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .search-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 1rem;
+      padding: 14px 18px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--text2); }
+
+    .search-btn {
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 14px 28px;
+      transition: opacity 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .search-btn:hover { opacity: 0.88; }
+    .search-btn:active { transform: scale(0.97); }
+    .search-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── Field toggles ── */
+    .field-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .field-label {
+      color: var(--text2);
+      font-size: 0.85rem;
+      margin-right: 4px;
+    }
+    .field-toggle {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      color: var(--text2);
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 5px 14px;
+      transition: all 0.15s;
+      user-select: none;
+    }
+    .field-toggle.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Main content ── */
+    .main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 32px 16px 60px;
+    }
+
+    /* ── Loading / status ── */
+    .status-bar {
+      text-align: center;
+      color: var(--text2);
+      font-size: 0.9rem;
+      padding: 20px;
+    }
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result header ── */
+    .result-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .result-header h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+    .result-header .count-badge {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 2px 12px;
+    }
+
+    /* ── Stats grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 20px;
+      transition: border-color 0.2s;
+    }
+    .stat-card:hover { border-color: var(--accent); }
+    .stat-card .label {
+      color: var(--text2);
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .stat-card .value {
+      font-size: 1.7rem;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .stat-card .sub {
+      color: var(--text2);
+      font-size: 0.8rem;
+    }
+    .stat-card.oral .value { color: #fbbf24; }
+    .stat-card.spotlight .value { color: var(--accent2); }
+    .stat-card.poster .value { color: var(--green); }
+    .stat-card.accept .value { color: var(--green); }
+    .stat-card.reject .value { color: var(--red); }
+    .stat-card.withdraw .value { color: var(--gray); }
+
+    /* ── Breakdown bar ── */
+    .breakdown {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      margin-bottom: 28px;
+    }
+    .breakdown h3 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 16px;
+    }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .bar-row:last-child { margin-bottom: 0; }
+    .bar-name {
+      width: 90px;
+      font-size: 0.85rem;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+    .bar-track {
+      flex: 1;
+      background: var(--surface2);
+      border-radius: 4px;
+      height: 8px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.6s cubic-bezier(.4,0,.2,1);
+    }
+    .bar-fill.oral    { background: #fbbf24; }
+    .bar-fill.spotlight { background: var(--accent2); }
+    .bar-fill.poster  { background: var(--green); }
+    .bar-fill.reject  { background: var(--red); }
+    .bar-fill.withdraw { background: #64748b; }
+    .bar-fill.deskreject { background: #475569; }
+    .bar-info {
+      width: 110px;
+      text-align: right;
+      font-size: 0.82rem;
+      color: var(--text2);
+      flex-shrink: 0;
+    }
+
+    /* ── Paper list ── */
+    .papers-section h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--text);
+    }
+    .paper-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 10px;
+      transition: border-color 0.2s, transform 0.1s;
+    }
+    .paper-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .paper-card a {
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .paper-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .status-pill {
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 3px 9px;
+      flex-shrink: 0;
+      text-transform: uppercase;
+    }
+    .pill-oral     { background: rgba(251,191,36,0.15);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+    .pill-spotlight{ background: rgba(167,139,250,0.15); color: var(--accent2); border: 1px solid rgba(167,139,250,0.3); }
+    .pill-poster   { background: rgba(52,211,153,0.12);  color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+    .paper-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .paper-meta {
+      display: flex;
+      gap: 16px;
+      font-size: 0.78rem;
+      color: var(--text2);
+      flex-wrap: wrap;
+    }
+    .paper-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* ── Footer ── */
+    .footer {
+      text-align: center;
+      color: var(--text2);
+      font-size: 0.78rem;
+      padding: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .footer a { color: var(--accent); text-decoration: none; }
+
+    /* ── Empty state ── */
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text2);
+    }
+    .empty .icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty p { font-size: 1rem; }
+
+    /* ── Responsive ── */
+    @media (max-width: 500px) {
+      .search-row { flex-direction: column; }
+      .search-btn { width: 100%; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>ICLR 2026 Paper Stats</h1>
+  <p>Search papers by keyword and instantly see acceptance rates, oral rates, and more.</p>
+  <div class="badge">Total submissions: <span id="total-badge">loading…</span></div>
+</div>
+
+<!-- Search -->
+<div class="search-wrap">
+  <div class="search-row">
+    <input
+      class="search-input"
+      id="query"
+      type="text"
+      placeholder='e.g.  attack   "large language model"   diffusion'
+      autofocus
+    />
+    <button class="search-btn" id="search-btn" onclick="doSearch()">Search</button>
+  </div>
+  <div class="field-row">
+    <span class="field-label">Search in:</span>
+    <button class="field-toggle active" data-field="title"    onclick="toggleField(this)">Title</button>
+    <button class="field-toggle"        data-field="abstract" onclick="toggleField(this)">Abstract</button>
+    <button class="field-toggle"        data-field="keywords" onclick="toggleField(this)">Keywords</button>
+    <button class="field-toggle"        data-field="tldr"     onclick="toggleField(this)">TL;DR</button>
+  </div>
+</div>
+
+<!-- Main -->
+<div class="main" id="main">
+  <div class="status-bar" id="status">
+    <span class="spinner"></span> Loading paper data…
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  Data from <a href="https://papercopilot.com/statistics/iclr-statistics/iclr-2026-statistics/" target="_blank">Paper Copilot</a>
+  ·
+  <a href="https://github.com/papercopilot/paperlists" target="_blank">GitHub</a>
+  · Built by <a href="https://github.com/binyxu" target="_blank">binyxu</a>
+</div>
+
+<script>
+const DATA_URL = "https://raw.githubusercontent.com/papercopilot/paperlists/main/iclr/iclr2026.json";
+const STATUS_ORDER = ["Oral", "Spotlight", "Poster", "Reject", "Withdraw", "Desk Reject"];
+const ACCEPT_SET   = new Set(["oral", "spotlight", "poster"]);
+const STATUS_CLASS = {
+  "Oral": "oral", "Spotlight": "spotlight", "Poster": "poster",
+  "Reject": "reject", "Withdraw": "withdraw", "Desk Reject": "deskreject"
+};
+const PILL_CLASS = {
+  "Oral": "pill-oral", "Spotlight": "pill-spotlight", "Poster": "pill-poster"
+};
+
+let ALL_PAPERS = null;
+
+// ── Load data ──────────────────────────────────────────────────────────────
+async function loadData() {
+  try {
+    const resp = await fetch(DATA_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    ALL_PAPERS = await resp.json();
+    document.getElementById("total-badge").textContent =
+      ALL_PAPERS.length.toLocaleString() + " papers";
+    document.getElementById("status").innerHTML =
+      `<span style="color:var(--green)">✓</span> Data loaded — ${ALL_PAPERS.length.toLocaleString()} papers. Type a keyword and search!`;
+  } catch (e) {
+    document.getElementById("status").innerHTML =
+      `<span style="color:var(--red)">✗ Failed to load data: ${e.message}</span><br>
+       <span style="font-size:0.82rem;color:var(--text2)">Try refreshing. If this persists, GitHub may be rate-limiting.</span>`;
+  }
+}
+
+// ── Field toggles ──────────────────────────────────────────────────────────
+function toggleField(btn) {
+  // At least one must remain active
+  const active = document.querySelectorAll(".field-toggle.active");
+  if (btn.classList.contains("active") && active.length === 1) return;
+  btn.classList.toggle("active");
+}
+
+function getActiveFields() {
+  return [...document.querySelectorAll(".field-toggle.active")]
+    .map(b => b.dataset.field);
+}
+
+// ── Normalize status ───────────────────────────────────────────────────────
+function normalizeStatus(raw) {
+  if (!raw) return "Unknown";
+  const s = raw.trim();
+  const low = s.toLowerCase();
+  for (const canonical of STATUS_ORDER) {
+    if (canonical.toLowerCase() === low) return canonical;
+  }
+  for (const canonical of STATUS_ORDER) {
+    if (low.includes(canonical.toLowerCase())) return canonical;
+  }
+  return s;
+}
+
+// ── Search ─────────────────────────────────────────────────────────────────
+function doSearch() {
+  if (!ALL_PAPERS) {
+    alert("Data still loading, please wait a moment.");
+    return;
+  }
+  const raw = document.getElementById("query").value.trim();
+  if (!raw) return;
+
+  // Parse quoted phrases and bare words
+  const keywords = [];
+  const re = /"([^"]+)"|(\S+)/g;
+  let m;
+  while ((m = re.exec(raw)) !== null) {
+    keywords.push((m[1] || m[2]).toLowerCase());
+  }
+
+  const fields = getActiveFields();
+
+  const matched = ALL_PAPERS.filter(p => {
+    const text = fields.map(f => (p[f] || "")).join(" ").toLowerCase();
+    return keywords.some(kw => text.includes(kw));
+  });
+
+  renderResults(matched, keywords, fields);
+}
+
+// Enter key
+document.getElementById("query").addEventListener("keydown", e => {
+  if (e.key === "Enter") doSearch();
+});
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function renderResults(papers, keywords, fields) {
+  const main = document.getElementById("main");
+  if (papers.length === 0) {
+    main.innerHTML = `
+      <div class="empty">
+        <div class="icon">🔍</div>
+        <p>No papers found for <strong>"${keywords.join(" / ")}"</strong> in ${fields.join(", ")}.</p>
+      </div>`;
+    return;
+  }
+
+  // Count by status
+  const counts = {};
+  for (const s of STATUS_ORDER) counts[s] = 0;
+  counts["Unknown"] = 0;
+  for (const p of papers) {
+    const s = normalizeStatus(p.status);
+    counts[s] = (counts[s] || 0) + 1;
+  }
+
+  const total    = papers.length;
+  const accepted = ["Oral","Spotlight","Poster"].reduce((a,s) => a + (counts[s]||0), 0);
+  const oral     = counts["Oral"] || 0;
+  const spotlight= counts["Spotlight"] || 0;
+  const poster   = counts["Poster"] || 0;
+  const reject   = counts["Reject"] || 0;
+  const withdraw = counts["Withdraw"] || 0;
+  const desk     = counts["Desk Reject"] || 0;
+
+  const pct = n => total ? (n/total*100).toFixed(1)+"%" : "—";
+  const acceptPct = total ? (accepted/total*100).toFixed(1) : "—";
+  const oralPct   = accepted ? (oral/accepted*100).toFixed(1) : "—";
+  const spotPct   = accepted ? (spotlight/accepted*100).toFixed(1) : "—";
+
+  // Accepted papers sorted
+  const acceptedPapers = papers
+    .filter(p => ACCEPT_SET.has(normalizeStatus(p.status).toLowerCase()))
+    .sort((a, b) => {
+      const ai = STATUS_ORDER.indexOf(normalizeStatus(a.status));
+      const bi = STATUS_ORDER.indexOf(normalizeStatus(b.status));
+      return ai !== bi ? ai - bi : (a.title || "").localeCompare(b.title || "");
+    });
+
+  // Bar rows
+  const barRows = [
+    { label: "Oral",        count: oral,     cls: "oral" },
+    { label: "Spotlight",   count: spotlight, cls: "spotlight" },
+    { label: "Poster",      count: poster,   cls: "poster" },
+    { label: "Reject",      count: reject,   cls: "reject" },
+    { label: "Withdraw",    count: withdraw, cls: "withdraw" },
+    { label: "Desk Reject", count: desk,     cls: "deskreject" },
+  ].filter(r => r.count > 0);
+
+  const barsHTML = barRows.map(r => `
+    <div class="bar-row">
+      <div class="bar-name">${r.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill ${r.cls}" style="width:${(r.count/total*100).toFixed(1)}%"></div>
+      </div>
+      <div class="bar-info">${r.count} &nbsp;·&nbsp; ${pct(r.count)}</div>
+    </div>`).join("");
+
+  // Paper cards
+  const cardsHTML = acceptedPapers.map(p => {
+    const status  = normalizeStatus(p.status);
+    const pill    = PILL_CLASS[status] || "pill-poster";
+    const rating  = Array.isArray(p.rating_avg) ? p.rating_avg[0] : null;
+    const area    = p.primary_area || "";
+    const site    = p.site || "#";
+    const title   = (p.title || "(no title)").replace(/</g,"&lt;");
+    return `
+    <div class="paper-card">
+      <a href="${site}" target="_blank" rel="noopener">
+        <div class="paper-top">
+          <span class="status-pill ${pill}">${status}</span>
+          <div class="paper-title">${title}</div>
+        </div>
+        <div class="paper-meta">
+          ${rating !== null ? `<span>⭐ avg ${rating.toFixed(2)}</span>` : ""}
+          ${area ? `<span>🏷 ${area}</span>` : ""}
+        </div>
+      </a>
+    </div>`;
+  }).join("");
+
+  const kwLabel = keywords.map(k => `"${k}"`).join(" or ");
+  const fieldLabel = fields.join(" + ");
+
+  main.innerHTML = `
+    <div class="result-header">
+      <h2>Results for ${kwLabel}</h2>
+      <span class="count-badge">${total.toLocaleString()} papers · searched in ${fieldLabel}</span>
+    </div>
+
+    <!-- Key stats cards -->
+    <div class="stats-grid">
+      <div class="stat-card accept">
+        <div class="label">Acceptance Rate</div>
+        <div class="value">${acceptPct}%</div>
+        <div class="sub">${accepted} / ${total} accepted</div>
+      </div>
+      <div class="stat-card oral">
+        <div class="label">Oral Rate</div>
+        <div class="value">${oral > 0 ? oralPct+"%" : "—"}</div>
+        <div class="sub">${oral} oral / ${accepted} accepted</div>
+      </div>
+      <div class="stat-card spotlight">
+        <div class="label">Spotlight Rate</div>
+        <div class="value">${spotlight > 0 ? spotPct+"%" : "—"}</div>
+        <div class="sub">${spotlight} spotlight / ${accepted} accepted</div>
+      </div>
+      <div class="stat-card reject">
+        <div class="label">Reject</div>
+        <div class="value">${pct(reject)}</div>
+        <div class="sub">${reject} papers</div>
+      </div>
+      <div class="stat-card withdraw">
+        <div class="label">Withdraw</div>
+        <div class="value">${pct(withdraw)}</div>
+        <div class="sub">${withdraw} + ${desk} desk reject</div>
+      </div>
+    </div>
+
+    <!-- Breakdown bar -->
+    <div class="breakdown">
+      <h3>Status Breakdown</h3>
+      ${barsHTML}
+    </div>
+
+    <!-- Accepted paper list -->
+    ${acceptedPapers.length > 0 ? `
+    <div class="papers-section">
+      <h3>Accepted Papers (${acceptedPapers.length})</h3>
+      ${cardsHTML}
+    </div>` : ""}
+  `;
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+loadData();
+</script>
+</body>
+</html>
