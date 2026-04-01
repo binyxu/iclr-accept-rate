@@ -443,7 +443,7 @@ function doSearch() {
   if (!ALL_PAPERS) { alert("Data still loading, please wait."); return; }
   var raw = document.getElementById("query").value.trim();
   if (!raw) return;
-  var keywords = [raw.toLowerCase()];
+  var keywords = raw.split(",").map(function(k){ return k.trim().toLowerCase(); }).filter(Boolean);
   var fields  = getActiveFields();
   var matched = ALL_PAPERS.filter(function(p) {
     var text = fields.map(function(f){ return p[f]||""; }).join(" ").toLowerCase();
