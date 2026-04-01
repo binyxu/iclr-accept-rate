@@ -29,7 +29,7 @@
       min-height: 100vh;
     }
 
-    /* ── Hero ── */
+    /* Hero */
     .hero {
       background: linear-gradient(135deg, #1a1d27 0%, #0f1117 60%);
       border-bottom: 1px solid var(--border);
@@ -46,13 +46,9 @@
       margin-bottom: 10px;
       letter-spacing: -0.5px;
     }
-    .hero p {
-      color: var(--text2);
-      font-size: 1rem;
-      max-width: 520px;
-      margin: 0 auto 8px;
-    }
-    .hero .badge {
+    .hero p { color: var(--text2); font-size: 1rem; max-width: 520px; margin: 0 auto 8px; }
+    .hero-badges { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+    .badge {
       display: inline-block;
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -60,11 +56,11 @@
       padding: 4px 14px;
       font-size: 0.78rem;
       color: var(--text2);
-      margin-top: 10px;
     }
-    .hero .badge span { color: var(--accent); font-weight: 600; }
+    .badge span { color: var(--accent); font-weight: 600; }
+    .badge.pv span { color: var(--accent2); }
 
-    /* ── Layout: search + leaderboard side by side ── */
+    /* Layout */
     .page-body {
       display: flex;
       align-items: flex-start;
@@ -81,13 +77,9 @@
       .right-col { width: 100%; }
     }
 
-    /* ── Search area ── */
+    /* Search */
     .search-wrap { margin-bottom: 28px; }
-    .search-row {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 14px;
-    }
+    .search-row { display: flex; gap: 10px; margin-bottom: 14px; }
     .search-input {
       flex: 1;
       background: var(--surface);
@@ -101,7 +93,6 @@
     }
     .search-input:focus { border-color: var(--accent); }
     .search-input::placeholder { color: var(--text2); }
-
     .search-btn {
       background: var(--accent);
       border: none;
@@ -116,15 +107,9 @@
     }
     .search-btn:hover { opacity: 0.88; }
     .search-btn:active { transform: scale(0.97); }
-    .search-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    /* ── Field toggles ── */
-    .field-row {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
+    /* Field toggles */
+    .field-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .field-label { color: var(--text2); font-size: 0.85rem; margin-right: 4px; }
     .field-toggle {
       background: var(--surface);
@@ -138,19 +123,10 @@
       transition: all 0.15s;
       user-select: none;
     }
-    .field-toggle.active {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
+    .field-toggle.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-    /* ── Loading / status ── */
-    .status-bar {
-      text-align: center;
-      color: var(--text2);
-      font-size: 0.9rem;
-      padding: 20px;
-    }
+    /* Status / spinner */
+    .status-bar { text-align: center; color: var(--text2); font-size: 0.9rem; padding: 20px; }
     .spinner {
       display: inline-block;
       width: 18px; height: 18px;
@@ -163,16 +139,10 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* ── Result header ── */
-    .result-header {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
+    /* Result header */
+    .result-header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
     .result-header h2 { font-size: 1.25rem; font-weight: 700; }
-    .result-header .count-badge {
+    .count-badge {
       background: var(--surface2);
       border: 1px solid var(--border);
       border-radius: 20px;
@@ -182,7 +152,7 @@
       padding: 2px 12px;
     }
 
-    /* ── Stats grid ── */
+    /* Stats grid */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -197,34 +167,18 @@
       transition: border-color 0.2s;
     }
     .stat-card:hover { border-color: var(--accent); }
-    .stat-card .label {
-      color: var(--text2);
-      font-size: 0.75rem;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
+    .stat-card .label { color: var(--text2); font-size: 0.75rem; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 8px; }
     .stat-card .value { font-size: 1.6rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
     .stat-card .sub   { color: var(--text2); font-size: 0.78rem; }
-    .stat-card.oral .value     { color: #fbbf24; }
-    .stat-card.spotlight .value{ color: var(--accent2); }
-    .stat-card.accept .value   { color: var(--green); }
-    .stat-card.reject .value   { color: var(--red); }
-    .stat-card.withdraw .value { color: var(--gray); }
+    .stat-card.oral .value      { color: #fbbf24; }
+    .stat-card.spotlight .value { color: var(--accent2); }
+    .stat-card.accept .value    { color: var(--green); }
+    .stat-card.reject .value    { color: var(--red); }
+    .stat-card.withdraw .value  { color: var(--gray); }
 
-    /* ── Breakdown bar ── */
-    .breakdown {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px 22px;
-      margin-bottom: 24px;
-    }
-    .breakdown h3 {
-      font-size: 0.85rem; font-weight: 600; color: var(--text2);
-      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px;
-    }
+    /* Breakdown bar */
+    .breakdown { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 24px; }
+    .breakdown h3 { font-size: 0.85rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
     .bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
     .bar-row:last-child { margin-bottom: 0; }
     .bar-name { width: 88px; font-size: 0.83rem; color: var(--text); flex-shrink: 0; }
@@ -238,7 +192,7 @@
     .bar-fill.deskreject { background: #475569; }
     .bar-info { width: 105px; text-align: right; font-size: 0.8rem; color: var(--text2); flex-shrink: 0; }
 
-    /* ── Paper list ── */
+    /* Paper list */
     .papers-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: var(--text); }
     .paper-card {
       background: var(--surface);
@@ -251,18 +205,15 @@
     .paper-card:hover { border-color: var(--accent); transform: translateY(-1px); }
     .paper-card a { text-decoration: none; color: inherit; display: block; }
     .paper-top { display: flex; align-items: flex-start; gap: 9px; margin-bottom: 5px; }
-    .status-pill {
-      border-radius: 6px; font-size: 0.7rem; font-weight: 700;
-      letter-spacing: 0.04em; padding: 3px 8px; flex-shrink: 0; text-transform: uppercase;
-    }
-    .pill-oral      { background: rgba(251,191,36,0.15);  color: #fbbf24;         border: 1px solid rgba(251,191,36,0.3); }
-    .pill-spotlight { background: rgba(167,139,250,0.15); color: var(--accent2);  border: 1px solid rgba(167,139,250,0.3); }
-    .pill-poster    { background: rgba(52,211,153,0.12);  color: var(--green);    border: 1px solid rgba(52,211,153,0.25); }
+    .status-pill { border-radius: 6px; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; padding: 3px 8px; flex-shrink: 0; text-transform: uppercase; }
+    .pill-oral      { background: rgba(251,191,36,0.15);  color: #fbbf24;        border: 1px solid rgba(251,191,36,0.3); }
+    .pill-spotlight { background: rgba(167,139,250,0.15); color: var(--accent2); border: 1px solid rgba(167,139,250,0.3); }
+    .pill-poster    { background: rgba(52,211,153,0.12);  color: var(--green);   border: 1px solid rgba(52,211,153,0.25); }
     .paper-title { font-size: 0.92rem; font-weight: 600; color: var(--text); line-height: 1.4; }
     .paper-meta { display: flex; gap: 14px; font-size: 0.76rem; color: var(--text2); flex-wrap: wrap; }
     .paper-meta span { display: flex; align-items: center; gap: 4px; }
 
-    /* ── Leaderboard ── */
+    /* Leaderboard */
     .leaderboard {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -271,58 +222,38 @@
       position: sticky;
       top: 20px;
     }
-    .lb-header {
-      padding: 16px 18px 12px;
-      border-bottom: 1px solid var(--border);
-    }
-    .lb-header h2 {
-      font-size: 1rem;
-      font-weight: 700;
-      margin-bottom: 2px;
-    }
-    .lb-header p { font-size: 0.76rem; color: var(--text2); }
+    .lb-header { padding: 16px 18px 12px; border-bottom: 1px solid var(--border); }
+    .lb-header h2 { font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .lb-header p  { font-size: 0.74rem; color: var(--text2); }
+    .lb-min-note  { font-size: 0.7rem; color: var(--text2); margin-top: 4px; opacity: 0.7; }
 
     .lb-section { padding: 14px 18px; }
     .lb-section + .lb-section { border-top: 1px solid var(--border); }
-    .lb-section-title {
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      margin-bottom: 10px;
-    }
-    .lb-section-title.top { color: var(--green); }
+    .lb-section-title { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; }
+    .lb-section-title.top    { color: var(--green); }
     .lb-section-title.bottom { color: var(--red); }
 
     .lb-row {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 6px 0;
       border-bottom: 1px solid var(--border);
       cursor: pointer;
-      transition: background 0.12s;
       border-radius: 6px;
-      padding: 6px 6px;
+      padding: 7px 6px;
       margin: 0 -6px;
+      transition: background 0.12s;
     }
     .lb-row:last-child { border-bottom: none; }
     .lb-row:hover { background: var(--surface2); }
 
-    .lb-rank {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text2);
-      width: 20px;
-      text-align: center;
-      flex-shrink: 0;
-    }
+    .lb-rank { font-size: 0.8rem; font-weight: 700; color: var(--text2); width: 22px; text-align: center; flex-shrink: 0; }
     .lb-rank.gold   { color: #fbbf24; }
     .lb-rank.silver { color: #94a3b8; }
     .lb-rank.bronze { color: #c97c41; }
 
+    .lb-main { flex: 1; min-width: 0; }
     .lb-kw {
-      flex: 1;
       font-size: 0.82rem;
       font-weight: 600;
       color: var(--text);
@@ -330,33 +261,37 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .lb-pct {
-      font-size: 0.85rem;
-      font-weight: 800;
-      flex-shrink: 0;
+    /* field source tag */
+    .lb-src {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      color: var(--text2);
+      margin-left: 4px;
+      vertical-align: middle;
     }
+    .lb-total { font-size: 0.68rem; color: var(--text2); margin-top: 1px; }
+
+    .lb-pct { font-size: 0.88rem; font-weight: 800; flex-shrink: 0; }
     .lb-pct.high { color: var(--green); }
     .lb-pct.low  { color: var(--red); }
 
-    .lb-empty {
-      text-align: center;
-      color: var(--text2);
-      font-size: 0.82rem;
-      padding: 16px 0;
-    }
-
+    .lb-empty { text-align: center; color: var(--text2); font-size: 0.82rem; padding: 16px 0; }
     .lb-loading { text-align: center; padding: 12px; color: var(--text2); font-size: 0.82rem; }
 
-    /* ── Empty state ── */
+    /* Empty state */
     .empty { text-align: center; padding: 60px 20px; color: var(--text2); }
     .empty .icon { font-size: 3rem; margin-bottom: 12px; }
     .empty p { font-size: 1rem; }
 
-    /* ── Footer ── */
-    .footer {
-      text-align: center; color: var(--text2); font-size: 0.78rem;
-      padding: 24px; border-top: 1px solid var(--border);
-    }
+    /* Footer */
+    .footer { text-align: center; color: var(--text2); font-size: 0.78rem; padding: 24px; border-top: 1px solid var(--border); }
     .footer a { color: var(--accent); text-decoration: none; }
 
     @media (max-width: 500px) {
@@ -372,16 +307,17 @@
 <div class="hero">
   <h1>ICLR 2026 Paper Stats</h1>
   <p>Search papers by keyword and instantly see acceptance rates, oral rates, and more.</p>
-  <div class="badge">Total submissions: <span id="total-badge">loading…</span></div>
+  <div class="hero-badges">
+    <div class="badge">Submissions: <span id="total-badge">loading…</span></div>
+    <div class="badge pv">👁 Today: <span id="pv-today">—</span> &nbsp;·&nbsp; Total: <span id="pv-total">—</span></div>
+  </div>
 </div>
 
-<!-- Page body: left (search+results) + right (leaderboard) -->
+<!-- Page body -->
 <div class="page-body">
 
-  <!-- ── Left column ── -->
+  <!-- Left: search + results -->
   <div class="left-col">
-
-    <!-- Search -->
     <div class="search-wrap">
       <div class="search-row">
         <input
@@ -391,7 +327,7 @@
           placeholder='e.g.  attack   "large language model"   diffusion'
           autofocus
         />
-        <button class="search-btn" id="search-btn" onclick="doSearch()">Search</button>
+        <button class="search-btn" onclick="doSearch()">Search</button>
       </div>
       <div class="field-row">
         <span class="field-label">Search in:</span>
@@ -402,7 +338,6 @@
       </div>
     </div>
 
-    <!-- Results -->
     <div id="main">
       <div class="status-bar" id="status">
         <span class="spinner"></span> Loading paper data…
@@ -410,12 +345,13 @@
     </div>
   </div>
 
-  <!-- ── Right column: Leaderboard ── -->
+  <!-- Right: leaderboard -->
   <div class="right-col">
     <div class="leaderboard">
       <div class="lb-header">
         <h2>🏆 Search Leaderboard</h2>
         <p>Funniest acceptance rates found so far</p>
+        <div class="lb-min-note">Only keywords with ≥100 matching papers count</div>
       </div>
 
       <div class="lb-section">
@@ -430,24 +366,29 @@
     </div>
   </div>
 
-</div><!-- end page-body -->
+</div>
 
 <!-- Footer -->
 <div class="footer">
   Data from <a href="https://papercopilot.com/statistics/iclr-statistics/iclr-2026-statistics/" target="_blank">Paper Copilot</a>
-  ·
+  &nbsp;·&nbsp;
   <a href="https://github.com/papercopilot/paperlists" target="_blank">GitHub</a>
-  · Built by <a href="https://github.com/binyxu" target="_blank">binyxu</a>
+  &nbsp;·&nbsp; Built by <a href="https://github.com/binyxu" target="_blank">binyxu</a>
 </div>
 
 <script>
-// ── CONFIG — paste your Apps Script URL here after deploying ──────────────
+// ── CONFIG: paste your Apps Script Web App URL here ───────────────────────
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbX93GzLWrP9QWsVxBG3htSOPyCW0DtL_H6ejKBuFaMHucZ8-M5Z_9GWfo0nTJDzCQnA/exec";
 
 const DATA_URL     = "https://raw.githubusercontent.com/papercopilot/paperlists/main/iclr/iclr2026.json";
 const STATUS_ORDER = ["Oral", "Spotlight", "Poster", "Reject", "Withdraw", "Desk Reject"];
 const ACCEPT_SET   = new Set(["oral", "spotlight", "poster"]);
-const PILL_CLASS   = { "Oral": "pill-oral", "Spotlight": "pill-spotlight", "Poster": "pill-poster" };
+const PILL_CLASS   = { Oral: "pill-oral", Spotlight: "pill-spotlight", Poster: "pill-poster" };
+const RANK_CLASS   = ["gold", "silver", "bronze"];
+const RANK_EMOJI   = ["🥇", "🥈", "🥉"];
+
+// Abbreviate field names for the source tag
+const FIELD_SHORT  = { title: "title", abstract: "abs", keywords: "kw", tldr: "tldr" };
 
 let ALL_PAPERS = null;
 
@@ -455,62 +396,80 @@ let ALL_PAPERS = null;
 async function loadData() {
   try {
     const resp = await fetch(DATA_URL);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
     ALL_PAPERS = await resp.json();
     document.getElementById("total-badge").textContent =
       ALL_PAPERS.length.toLocaleString() + " papers";
     document.getElementById("status").innerHTML =
-      `<span style="color:var(--green)">✓</span> Data loaded — ${ALL_PAPERS.length.toLocaleString()} papers. Type a keyword and search!`;
+      '<span style="color:var(--green)">✓</span> Data loaded — ' +
+      ALL_PAPERS.length.toLocaleString() + " papers. Type a keyword and search!";
   } catch (e) {
     document.getElementById("status").innerHTML =
-      `<span style="color:var(--red)">✗ Failed to load data: ${e.message}</span>`;
+      '<span style="color:var(--red)">✗ Failed to load: ' + e.message + "</span>";
   }
 }
 
+// ── Page view tracking ─────────────────────────────────────────────────────
+async function recordPageView() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_URL_HERE") return;
+  try {
+    await fetch(APPS_SCRIPT_URL + "?action=pageview");
+  } catch (_) {}
+}
+
 // ── Leaderboard ────────────────────────────────────────────────────────────
-const RANK_CLASS = ["gold", "silver", "bronze"];
-const RANK_EMOJI = ["🥇", "🥈", "🥉"];
+function fieldLabel(fieldsStr) {
+  return fieldsStr.split(",")
+    .map(f => FIELD_SHORT[f.trim()] || f.trim())
+    .join("+");
+}
 
 function renderLbRows(containerId, rows, isHigh) {
   const el = document.getElementById(containerId);
   if (!rows || rows.length === 0) {
-    el.innerHTML = `<div class="lb-empty">No searches yet — be the first!</div>`;
+    el.innerHTML = '<div class="lb-empty">No results yet — be the first!</div>';
     return;
   }
-  el.innerHTML = rows.map((r, i) => {
+  el.innerHTML = rows.map(function(r, i) {
     const rankCls  = RANK_CLASS[i] || "";
-    const rankMark = RANK_EMOJI[i] || `${i+1}`;
+    const rankMark = RANK_EMOJI[i] || (i + 1);
     const pct      = Number(r.accept_pct).toFixed(1);
-    const kw       = r.keyword.length > 20 ? r.keyword.slice(0, 18) + "…" : r.keyword;
-    return `
-    <div class="lb-row" onclick="fillSearch('${r.keyword.replace(/'/g,"\\'")}', '${r.fields}')"
-         title="Click to search: ${r.keyword} (${r.fields}) — ${r.total} papers">
-      <div class="lb-rank ${rankCls}">${rankMark}</div>
-      <div class="lb-kw">${kw}</div>
-      <div class="lb-pct ${isHigh ? 'high' : 'low'}">${pct}%</div>
-    </div>`;
+    const kw       = r.keyword.length > 18 ? r.keyword.slice(0, 16) + "…" : r.keyword;
+    const src      = fieldLabel(r.fields || "title");
+    const kwSafe   = r.keyword.replace(/'/g, "\\'");
+    return '<div class="lb-row" onclick="fillSearch(\'' + kwSafe + "', '" + (r.fields || "title") + '\')"' +
+      ' title="' + r.keyword + ' (' + r.fields + ') — ' + r.total + ' papers, ' + pct + '% accepted">' +
+      '<div class="lb-rank ' + rankCls + '">' + rankMark + '</div>' +
+      '<div class="lb-main">' +
+        '<div class="lb-kw">' + kw + '<span class="lb-src">' + src + '</span></div>' +
+        '<div class="lb-total">' + Number(r.total).toLocaleString() + ' papers</div>' +
+      '</div>' +
+      '<div class="lb-pct ' + (isHigh ? "high" : "low") + '">' + pct + '%</div>' +
+    '</div>';
   }).join("");
 }
 
 async function fetchLeaderboard() {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_URL_HERE") {
     document.getElementById("lb-high").innerHTML =
-      `<div class="lb-empty">⚙️ Leaderboard not configured yet.</div>`;
-    document.getElementById("lb-low").innerHTML =
-      `<div class="lb-empty">Add your Apps Script URL to enable.</div>`;
+      '<div class="lb-empty">⚙️ Configure Apps Script URL to enable.</div>';
+    document.getElementById("lb-low").innerHTML = "";
     return;
   }
   try {
-    const url  = `${APPS_SCRIPT_URL}?action=leaderboard`;
-    const resp = await fetch(url);
+    const resp = await fetch(APPS_SCRIPT_URL + "?action=leaderboard");
     const data = await resp.json();
     if (data.ok) {
       renderLbRows("lb-high", data.highest, true);
       renderLbRows("lb-low",  data.lowest,  false);
+      if (data.stats) {
+        document.getElementById("pv-today").textContent = data.stats.today_pv.toLocaleString();
+        document.getElementById("pv-total").textContent = data.stats.total_pv.toLocaleString();
+      }
     }
   } catch (e) {
     document.getElementById("lb-high").innerHTML =
-      `<div class="lb-empty" style="color:var(--red)">Failed to load</div>`;
+      '<div class="lb-empty" style="color:var(--red)">Failed to load</div>';
     document.getElementById("lb-low").innerHTML = "";
   }
 }
@@ -518,23 +477,20 @@ async function fetchLeaderboard() {
 async function recordSearch(keyword, fields, total, accepted, acceptPct, oral, oralPct) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "YOUR_APPS_SCRIPT_URL_HERE") return;
   try {
-    const params = new URLSearchParams({
+    const p = new URLSearchParams({
       action: "record", keyword, fields,
-      total, accepted, accept_pct: acceptPct,
-      oral, oral_pct: oralPct
+      total, accepted, accept_pct: acceptPct, oral, oral_pct: oralPct
     });
-    await fetch(`${APPS_SCRIPT_URL}?${params}`);
-    // Refresh leaderboard after recording
+    await fetch(APPS_SCRIPT_URL + "?" + p.toString());
     setTimeout(fetchLeaderboard, 800);
-  } catch (_) { /* silently fail */ }
+  } catch (_) {}
 }
 
-// Click a leaderboard row to fill the search box and re-run
+// Click leaderboard row → fill search and run
 function fillSearch(keyword, fields) {
   document.getElementById("query").value = keyword;
-  // Activate the right field toggles
-  const fieldList = fields.split(",").map(f => f.trim());
-  document.querySelectorAll(".field-toggle").forEach(btn => {
+  const fieldList = fields.split(",").map(function(f) { return f.trim(); });
+  document.querySelectorAll(".field-toggle").forEach(function(btn) {
     btn.classList.toggle("active", fieldList.includes(btn.dataset.field));
   });
   doSearch();
@@ -548,178 +504,155 @@ function toggleField(btn) {
   btn.classList.toggle("active");
 }
 function getActiveFields() {
-  return [...document.querySelectorAll(".field-toggle.active")].map(b => b.dataset.field);
+  return Array.from(document.querySelectorAll(".field-toggle.active"))
+    .map(function(b) { return b.dataset.field; });
 }
 
 // ── Normalize status ───────────────────────────────────────────────────────
 function normalizeStatus(raw) {
   if (!raw) return "Unknown";
-  const low = raw.trim().toLowerCase();
-  for (const c of STATUS_ORDER) if (c.toLowerCase() === low) return c;
-  for (const c of STATUS_ORDER) if (low.includes(c.toLowerCase())) return c;
+  var low = raw.trim().toLowerCase();
+  for (var i = 0; i < STATUS_ORDER.length; i++) {
+    if (STATUS_ORDER[i].toLowerCase() === low) return STATUS_ORDER[i];
+  }
+  for (var j = 0; j < STATUS_ORDER.length; j++) {
+    if (low.includes(STATUS_ORDER[j].toLowerCase())) return STATUS_ORDER[j];
+  }
   return raw.trim();
 }
 
 // ── Search ─────────────────────────────────────────────────────────────────
 function doSearch() {
   if (!ALL_PAPERS) { alert("Data still loading, please wait."); return; }
-  const raw = document.getElementById("query").value.trim();
+  var raw = document.getElementById("query").value.trim();
   if (!raw) return;
 
-  const keywords = [];
-  const re = /"([^"]+)"|(\S+)/g;
-  let m;
+  var keywords = [];
+  var re = /"([^"]+)"|(\S+)/g;
+  var m;
   while ((m = re.exec(raw)) !== null) keywords.push((m[1] || m[2]).toLowerCase());
 
-  const fields  = getActiveFields();
-  const matched = ALL_PAPERS.filter(p => {
-    const text = fields.map(f => (p[f] || "")).join(" ").toLowerCase();
-    return keywords.some(kw => text.includes(kw));
+  var fields  = getActiveFields();
+  var matched = ALL_PAPERS.filter(function(p) {
+    var text = fields.map(function(f) { return p[f] || ""; }).join(" ").toLowerCase();
+    return keywords.some(function(kw) { return text.includes(kw); });
   });
 
   renderResults(matched, keywords, fields);
 }
 
-document.getElementById("query").addEventListener("keydown", e => {
+document.getElementById("query").addEventListener("keydown", function(e) {
   if (e.key === "Enter") doSearch();
 });
 
 // ── Render results ─────────────────────────────────────────────────────────
 function renderResults(papers, keywords, fields) {
-  const main = document.getElementById("main");
+  var main = document.getElementById("main");
   if (papers.length === 0) {
-    main.innerHTML = `<div class="empty"><div class="icon">🔍</div>
-      <p>No papers found for <strong>"${keywords.join(" / ")}"</strong> in ${fields.join(", ")}.</p></div>`;
+    main.innerHTML = '<div class="empty"><div class="icon">🔍</div>' +
+      '<p>No papers found for <strong>"' + keywords.join(" / ") + '"</strong> in ' + fields.join(", ") + '.</p></div>';
     return;
   }
 
-  const counts = {};
-  for (const s of STATUS_ORDER) counts[s] = 0;
-  for (const p of papers) { const s = normalizeStatus(p.status); counts[s] = (counts[s]||0)+1; }
+  var counts = {};
+  STATUS_ORDER.forEach(function(s) { counts[s] = 0; });
+  papers.forEach(function(p) {
+    var s = normalizeStatus(p.status);
+    counts[s] = (counts[s] || 0) + 1;
+  });
 
-  const total     = papers.length;
-  const accepted  = ["Oral","Spotlight","Poster"].reduce((a,s) => a+(counts[s]||0), 0);
-  const oral      = counts["Oral"]       || 0;
-  const spotlight = counts["Spotlight"]  || 0;
-  const poster    = counts["Poster"]     || 0;
-  const reject    = counts["Reject"]     || 0;
-  const withdraw  = counts["Withdraw"]   || 0;
-  const desk      = counts["Desk Reject"]|| 0;
+  var total      = papers.length;
+  var accepted   = ["Oral","Spotlight","Poster"].reduce(function(a,s){ return a+(counts[s]||0); }, 0);
+  var oral       = counts["Oral"]        || 0;
+  var spotlight  = counts["Spotlight"]   || 0;
+  var poster     = counts["Poster"]      || 0;
+  var reject     = counts["Reject"]      || 0;
+  var withdraw   = counts["Withdraw"]    || 0;
+  var desk       = counts["Desk Reject"] || 0;
 
-  const pct       = n => total    ? (n/total*100).toFixed(1)+"%" : "—";
-  const acceptPct = total    ? +(accepted/total*100).toFixed(2) : 0;
-  const oralPct   = accepted ? +(oral/accepted*100).toFixed(2)  : 0;
-  const spotPct   = accepted ? (spotlight/accepted*100).toFixed(1) : "—";
+  var pct        = function(n) { return total ? (n/total*100).toFixed(1)+"%" : "—"; };
+  var acceptPct  = total    ? +(accepted/total*100).toFixed(2) : 0;
+  var oralPct    = accepted ? +(oral/accepted*100).toFixed(2)  : 0;
+  var spotPct    = accepted ? (spotlight/accepted*100).toFixed(1) : "—";
 
-  // Record to leaderboard (fire and forget)
-  recordSearch(
-    keywords.join(" "),
-    fields.join(","),
-    total, accepted, acceptPct, oral, oralPct
-  );
+  // Record to leaderboard
+  recordSearch(keywords.join(" "), fields.join(","), total, accepted, acceptPct, oral, oralPct);
 
-  const acceptedPapers = papers
-    .filter(p => ACCEPT_SET.has(normalizeStatus(p.status).toLowerCase()))
-    .sort((a,b) => {
-      const ai = STATUS_ORDER.indexOf(normalizeStatus(a.status));
-      const bi = STATUS_ORDER.indexOf(normalizeStatus(b.status));
-      return ai !== bi ? ai-bi : (a.title||"").localeCompare(b.title||"");
+  // Accepted papers sorted
+  var acceptedPapers = papers
+    .filter(function(p) { return ACCEPT_SET.has(normalizeStatus(p.status).toLowerCase()); })
+    .sort(function(a, b) {
+      var ai = STATUS_ORDER.indexOf(normalizeStatus(a.status));
+      var bi = STATUS_ORDER.indexOf(normalizeStatus(b.status));
+      return ai !== bi ? ai - bi : (a.title||"").localeCompare(b.title||"");
     });
 
-  const barRows = [
-    { label:"Oral",        count:oral,     cls:"oral" },
-    { label:"Spotlight",   count:spotlight,cls:"spotlight" },
-    { label:"Poster",      count:poster,   cls:"poster" },
-    { label:"Reject",      count:reject,   cls:"reject" },
-    { label:"Withdraw",    count:withdraw, cls:"withdraw" },
-    { label:"Desk Reject", count:desk,     cls:"deskreject" },
-  ].filter(r => r.count > 0);
+  var barRows = [
+    { label:"Oral",        count:oral,      cls:"oral" },
+    { label:"Spotlight",   count:spotlight, cls:"spotlight" },
+    { label:"Poster",      count:poster,    cls:"poster" },
+    { label:"Reject",      count:reject,    cls:"reject" },
+    { label:"Withdraw",    count:withdraw,  cls:"withdraw" },
+    { label:"Desk Reject", count:desk,      cls:"deskreject" },
+  ].filter(function(r) { return r.count > 0; });
 
-  const barsHTML = barRows.map(r => `
-    <div class="bar-row">
-      <div class="bar-name">${r.label}</div>
-      <div class="bar-track">
-        <div class="bar-fill ${r.cls}" style="width:${(r.count/total*100).toFixed(1)}%"></div>
-      </div>
-      <div class="bar-info">${r.count} · ${pct(r.count)}</div>
-    </div>`).join("");
-
-  const cardsHTML = acceptedPapers.map(p => {
-    const status = normalizeStatus(p.status);
-    const pill   = PILL_CLASS[status] || "pill-poster";
-    const rating = Array.isArray(p.rating_avg) ? p.rating_avg[0] : null;
-    const area   = p.primary_area || "";
-    const site   = p.site || "#";
-    const title  = (p.title||"(no title)").replace(/</g,"&lt;");
-    return `
-    <div class="paper-card">
-      <a href="${site}" target="_blank" rel="noopener">
-        <div class="paper-top">
-          <span class="status-pill ${pill}">${status}</span>
-          <div class="paper-title">${title}</div>
-        </div>
-        <div class="paper-meta">
-          ${rating !== null ? `<span>⭐ avg ${rating.toFixed(2)}</span>` : ""}
-          ${area ? `<span>🏷 ${area}</span>` : ""}
-        </div>
-      </a>
-    </div>`;
+  var barsHTML = barRows.map(function(r) {
+    return '<div class="bar-row">' +
+      '<div class="bar-name">' + r.label + '</div>' +
+      '<div class="bar-track"><div class="bar-fill ' + r.cls + '" style="width:' + (r.count/total*100).toFixed(1) + '%"></div></div>' +
+      '<div class="bar-info">' + r.count + ' &middot; ' + pct(r.count) + '</div>' +
+    '</div>';
   }).join("");
 
-  const kwLabel    = keywords.map(k=>`"${k}"`).join(" or ");
-  const fieldLabel = fields.join(" + ");
+  var cardsHTML = acceptedPapers.map(function(p) {
+    var status = normalizeStatus(p.status);
+    var pill   = PILL_CLASS[status] || "pill-poster";
+    var rating = Array.isArray(p.rating_avg) ? p.rating_avg[0] : null;
+    var area   = p.primary_area || "";
+    var site   = p.site || "#";
+    var title  = (p.title || "(no title)").replace(/</g,"&lt;");
+    return '<div class="paper-card"><a href="' + site + '" target="_blank" rel="noopener">' +
+      '<div class="paper-top"><span class="status-pill ' + pill + '">' + status + '</span>' +
+      '<div class="paper-title">' + title + '</div></div>' +
+      '<div class="paper-meta">' +
+      (rating !== null ? '<span>&#11088; avg ' + rating.toFixed(2) + '</span>' : '') +
+      (area ? '<span>&#127991; ' + area + '</span>' : '') +
+      '</div></a></div>';
+  }).join("");
 
-  main.innerHTML = `
-    <div class="result-header">
-      <h2>Results for ${kwLabel}</h2>
-      <span class="count-badge">${total.toLocaleString()} papers · in ${fieldLabel}</span>
-    </div>
+  var kwLabel    = keywords.map(function(k){ return '"' + k + '"'; }).join(" or ");
+  var fieldLabel = fields.join(" + ");
 
-    <div class="stats-grid">
-      <div class="stat-card accept">
-        <div class="label">Acceptance Rate</div>
-        <div class="value">${acceptPct}%</div>
-        <div class="sub">${accepted} / ${total} accepted</div>
-      </div>
-      <div class="stat-card oral">
-        <div class="label">Oral Rate</div>
-        <div class="value">${oral > 0 ? oralPct+"%" : "—"}</div>
-        <div class="sub">${oral} oral / ${accepted} accepted</div>
-      </div>
-      <div class="stat-card spotlight">
-        <div class="label">Spotlight Rate</div>
-        <div class="value">${spotlight > 0 ? spotPct+"%" : "—"}</div>
-        <div class="sub">${spotlight} spotlight / ${accepted} accepted</div>
-      </div>
-      <div class="stat-card reject">
-        <div class="label">Reject</div>
-        <div class="value">${pct(reject)}</div>
-        <div class="sub">${reject} papers</div>
-      </div>
-      <div class="stat-card withdraw">
-        <div class="label">Withdraw</div>
-        <div class="value">${pct(withdraw)}</div>
-        <div class="sub">${withdraw} + ${desk} desk reject</div>
-      </div>
-    </div>
+  main.innerHTML =
+    '<div class="result-header">' +
+      '<h2>Results for ' + kwLabel + '</h2>' +
+      '<span class="count-badge">' + total.toLocaleString() + ' papers &middot; in ' + fieldLabel + '</span>' +
+    '</div>' +
 
-    <div class="breakdown">
-      <h3>Status Breakdown</h3>
-      ${barsHTML}
-    </div>
+    '<div class="stats-grid">' +
+      '<div class="stat-card accept"><div class="label">Acceptance Rate</div>' +
+        '<div class="value">' + acceptPct + '%</div><div class="sub">' + accepted + ' / ' + total + ' accepted</div></div>' +
+      '<div class="stat-card oral"><div class="label">Oral Rate</div>' +
+        '<div class="value">' + (oral > 0 ? oralPct+"%" : "—") + '</div><div class="sub">' + oral + ' oral / ' + accepted + ' accepted</div></div>' +
+      '<div class="stat-card spotlight"><div class="label">Spotlight Rate</div>' +
+        '<div class="value">' + (spotlight > 0 ? spotPct+"%" : "—") + '</div><div class="sub">' + spotlight + ' spotlight / ' + accepted + ' accepted</div></div>' +
+      '<div class="stat-card reject"><div class="label">Reject</div>' +
+        '<div class="value">' + pct(reject) + '</div><div class="sub">' + reject + ' papers</div></div>' +
+      '<div class="stat-card withdraw"><div class="label">Withdraw</div>' +
+        '<div class="value">' + pct(withdraw) + '</div><div class="sub">' + withdraw + ' + ' + desk + ' desk reject</div></div>' +
+    '</div>' +
 
-    ${acceptedPapers.length > 0 ? `
-    <div class="papers-section">
-      <h3>Accepted Papers (${acceptedPapers.length})</h3>
-      ${cardsHTML}
-    </div>` : ""}
-  `;
+    '<div class="breakdown"><h3>Status Breakdown</h3>' + barsHTML + '</div>' +
+
+    (acceptedPapers.length > 0 ?
+      '<div class="papers-section"><h3>Accepted Papers (' + acceptedPapers.length + ')</h3>' + cardsHTML + '</div>'
+      : "");
 }
 
 // ── Boot ───────────────────────────────────────────────────────────────────
 loadData();
 fetchLeaderboard();
-// Refresh leaderboard every 30s
+recordPageView();
 setInterval(fetchLeaderboard, 30000);
 </script>
 </body>
