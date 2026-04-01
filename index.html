@@ -216,11 +216,11 @@
 
       <!-- L2: field sub-tabs -->
       <div class="lb-l2-tabs">
-        <div class="lb-l2-tab active" onclick="setL2('all')">All</div>
-        <div class="lb-l2-tab" onclick="setL2('title')">Title</div>
-        <div class="lb-l2-tab" onclick="setL2('abstract')">Abstract</div>
-        <div class="lb-l2-tab" onclick="setL2('keywords')">Keywords</div>
-        <div class="lb-l2-tab" onclick="setL2('tldr')">TL;DR</div>
+        <div class="lb-l2-tab active" data-l2="all"      onclick="setL2('all')">All</div>
+        <div class="lb-l2-tab"        data-l2="title"    onclick="setL2('title')">Title</div>
+        <div class="lb-l2-tab"        data-l2="abstract" onclick="setL2('abstract')">Abstract</div>
+        <div class="lb-l2-tab"        data-l2="keywords" onclick="setL2('keywords')">Keywords</div>
+        <div class="lb-l2-tab"        data-l2="tldr"     onclick="setL2('tldr')">TL;DR</div>
       </div>
 
       <!-- L3: high/low (only shown for acceptance) -->
@@ -291,21 +291,14 @@ function setL1(val) {
   document.querySelectorAll(".lb-l1-tab").forEach(function(t,i) {
     t.classList.toggle("active", (i===0 && val==="accept") || (i===1 && val==="oral"));
   });
-  // hide L3 (high/low) for oral — oral only has "highest"
-  document.getElementById("lb-l3-wrap").style.display = val === "oral" ? "none" : "flex";
+  document.getElementById("lb-l3-wrap").style.display = "flex";
   renderLb();
 }
 
 function setL2(val) {
   lbL2 = val;
   document.querySelectorAll(".lb-l2-tab").forEach(function(t) {
-    t.classList.toggle("active", t.textContent.toLowerCase() === val ||
-      (val==="all" && t.textContent==="All") ||
-      (val==="abstract" && t.textContent==="Abstract") ||
-      (val==="keywords" && t.textContent==="Keywords") ||
-      (val==="tldr" && t.textContent==="TL;DR") ||
-      (val==="title" && t.textContent==="Title")
-    );
+    t.classList.toggle("active", t.dataset.l2 === val);
   });
   renderLb();
 }
@@ -329,7 +322,7 @@ function renderLb() {
   var rows;
   var isOral = lbL1 === "oral";
   if (isOral) {
-    rows = group.oral_high || [];
+    rows = lbL3 === "high" ? (group.oral_high || []) : (group.oral_low || []);
   } else {
     rows = lbL3 === "high" ? (group.accept_high || []) : (group.accept_low || []);
   }
@@ -340,7 +333,7 @@ function renderLb() {
   }
 
   var medals = ["&#129351;","&#129352;","&#129353;"];
-  var isHigh = isOral || lbL3 === "high";
+  var isHigh = lbL3 === "high";
 
   body.innerHTML = rows.map(function(r, i) {
     var rankCls  = RANK_CLASS[i] || "";
