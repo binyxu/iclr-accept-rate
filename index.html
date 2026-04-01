@@ -173,7 +173,7 @@
   <p>Search papers by keyword and instantly see acceptance rates, oral rates, and more.</p>
   <div class="hero-badges">
     <div class="badge">Submissions: <span id="total-badge">loading...</span></div>
-    <div class="badge pv">&#128065; Today: <span id="pv-today">-</span> &nbsp;&middot;&nbsp; Total: <span id="pv-total">-</span></div>
+    <div class="badge pv">&#128065; Today: <span id="pv-today">...</span> &nbsp;&middot;&nbsp; Yesterday: <span id="pv-yesterday">...</span> &nbsp;&middot;&nbsp; Total: <span id="pv-total">...</span></div>
   </div>
 </div>
 
@@ -282,7 +282,29 @@ async function recordPageView() {
   try {
     var localDate = new Date().toLocaleDateString("sv-SE");
     await fetch(APPS_SCRIPT_URL + "?action=pageview&date=" + localDate);
+    // After recording, fetch fresh PV stats independently
+    fetchPvStats();
   } catch(_) {}
+}
+
+async function fetchPvStats() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("YOUR_") === 0) return;
+  try {
+    var resp = await fetch(APPS_SCRIPT_URL + "?action=leaderboard");
+    var data = await resp.json();
+    if (data.ok && data.stats) {
+      updatePvBadge(data.stats);
+    }
+  } catch(_) {}
+}
+
+function updatePvBadge(stats) {
+  var today     = stats.today_pv     != null ? stats.today_pv.toLocaleString()     : "0";
+  var yesterday = stats.yesterday_pv != null ? stats.yesterday_pv.toLocaleString() : "0";
+  var total     = stats.total_pv     != null ? stats.total_pv.toLocaleString()     : "0";
+  document.getElementById("pv-today").textContent     = today;
+  document.getElementById("pv-yesterday").textContent = yesterday;
+  document.getElementById("pv-total").textContent     = total;
 }
 
 // ── Leaderboard state ─────────────────────────────────────────────────────
@@ -370,10 +392,7 @@ async function fetchLeaderboard() {
     LB_DATA  = await resp.json();
     if (LB_DATA.ok) {
       renderLb();
-      if (LB_DATA.stats) {
-        document.getElementById("pv-today").textContent = LB_DATA.stats.today_pv.toLocaleString();
-        document.getElementById("pv-total").textContent = LB_DATA.stats.total_pv.toLocaleString();
-      }
+      if (LB_DATA.stats) { updatePvBadge(LB_DATA.stats); }
     }
   } catch(e) {
     document.getElementById("lb-body").innerHTML =
