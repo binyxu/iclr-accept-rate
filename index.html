@@ -170,7 +170,11 @@
     .score-hist-wrap h3 { font-size: 0.85rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
     .hist-chart { position: relative; }
     .hist-bars { display: flex; align-items: flex-end; gap: 3px; height: 120px; padding-bottom: 0; }
-    .hist-bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; position: relative; cursor: default; }
+    .hist-bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; position: relative; cursor: pointer; }
+    .hist-bar-col:hover .hist-bar-segments { filter: brightness(1.25); }
+    .hist-bar-col.selected .hist-bar-segments { outline: 2px solid var(--accent); border-radius: 3px 3px 0 0; filter: brightness(1.3); }
+    .hist-score-indicator { font-size: 0.68rem; color: var(--accent); font-weight: 700; margin-top: 2px; display: none; }
+    .hist-bar-col.selected .hist-score-indicator { display: block; }
     .hist-bar-col:hover .hist-tooltip { display: block; }
     .hist-bar-segments { width: 100%; display: flex; flex-direction: column-reverse; gap: 0; border-radius: 3px 3px 0 0; overflow: hidden; }
     .hist-seg { width: 100%; transition: opacity 0.2s; }
@@ -558,7 +562,7 @@ function buildScoreHistogram(papers) {
   papers.forEach(function(p) {
     var rating = Array.isArray(p.rating_avg) ? p.rating_avg[0] : (typeof p.rating_avg === 'number' ? p.rating_avg : null);
     if (rating === null || rating === undefined || isNaN(rating)) return;
-    var score = Math.floor(rating * 4) / 4; // bin by 0.25
+    var score = Math.floor(rating * 2) / 2; // bin by 0.5
     if (score < minScore) minScore = score;
     if (score > maxScore) maxScore = score;
     var status = normalizeStatus(p.status).toLowerCase();
@@ -574,8 +578,8 @@ function buildScoreHistogram(papers) {
 
   // Build bins
   var bins = [];
-  for (var s = minScore; s <= maxScore; s += 0.25) {
-    var key = Math.round(s * 4) / 4;
+  for (var s = minScore; s <= maxScore; s += 0.5) {
+    var key = Math.round(s * 2) / 2;
     var seg = statusSeg[key] || {oral:0,spotlight:0,poster:0,reject:0,withdraw:0,other:0};
     var total = seg.oral + seg.spotlight + seg.poster + seg.reject + seg.withdraw + seg.other;
     bins.push({score: key, total: total, seg: seg});
@@ -609,9 +613,10 @@ function buildScoreHistogram(papers) {
     if (b.seg.withdraw) tipLines.push('Withdraw: ' + b.seg.withdraw);
     var tipHTML = tipLines.join('<br>');
 
-    return '<div class="hist-bar-col">' +
+    return '<div class="hist-bar-col" data-score="' + b.score + '" onclick="filterByScore(' + b.score + ', this)">' +
       '<div class="hist-bar-segments" style="height:120px">' + segHTML + '</div>' +
       '<div class="hist-xlabel">' + b.score + '</div>' +
+      '<div class="hist-score-indicator">&#9650;</div>' +
       '<div class="hist-tooltip">' + tipHTML + '</div>' +
     '</div>';
   }).join('');
@@ -635,6 +640,7 @@ function buildScoreHistogram(papers) {
 }
 
 function renderResults(papers, keywords, fields) {
+  _activeScoreFilter = null;
   var main = document.getElementById("main");
   if (!papers.length) {
     main.innerHTML = '<div class="empty"><div class="icon">&#128269;</div>' +
@@ -698,8 +704,9 @@ function renderResults(papers, keywords, fields) {
     var area   = p.primary_area||"";
     var site   = p.site||"#";
     var title  = (p.title||"(no title)").replace(/</g,"&lt;");
+    var cardScore = Array.isArray(p.rating_avg) ? p.rating_avg[0] : (typeof p.rating_avg==='number' ? p.rating_avg : NaN);
     var defaultHidden = (statusLow==='reject'||statusLow==='withdraw'||statusLow==='desk-reject');
-    return '<div class="paper-card" data-status="' + statusLow + '"' + (defaultHidden?' style="display:none"':'') + '>' +
+    return '<div class="paper-card" data-status="' + statusLow + '" data-score="' + cardScore + '"' + (defaultHidden?' style="display:none"':'') + '>' +
       '<a href="' + site + '" target="_blank" rel="noopener">' +
       '<div class="paper-top"><span class="status-pill ' + pill + '">' + status + '</span>' +
       '<div class="paper-title">' + title + '</div></div>' +
@@ -748,12 +755,52 @@ function renderResults(papers, keywords, fields) {
   if (label) label.textContent = "Papers (" + (oral+spotlight+poster) + " shown)";
 }
 
+// ── Score click filter ───────────────────────────────────────────────────
+var _activeScoreFilter = null;
+function filterByScore(score, colEl) {
+  var isSame = _activeScoreFilter === score;
+  // Clear all selected bars
+  document.querySelectorAll('.hist-bar-col.selected').forEach(function(el){ el.classList.remove('selected'); });
+  if (isSame) {
+    // Toggle off: restore normal filter
+    _activeScoreFilter = null;
+    applyPaperFilter();
+    var label = document.getElementById('papers-count-label');
+    if (label) {
+      var visible = document.querySelectorAll('#papers-list .paper-card:not([style*="display: none"])').length;
+      label.textContent = 'Papers (' + visible + ' shown)';
+    }
+    return;
+  }
+  _activeScoreFilter = score;
+  colEl.classList.add('selected');
+
+  var cards = document.querySelectorAll('#papers-list .paper-card');
+  var shown = 0;
+  cards.forEach(function(c) {
+    // Get rating from data attribute we'll look up from allSortedPapers via DOM index
+    // Instead we match via the paper's displayed avg score in the meta
+    // We use a data-score attribute we'll add to each card
+    var cardScore = parseFloat(c.dataset.score);
+    var match = !isNaN(cardScore) && Math.round(cardScore * 2) / 2 === score;
+    c.style.display = match ? '' : 'none';
+    if (match) shown++;
+  });
+  var label = document.getElementById('papers-count-label');
+  if (label) label.textContent = 'Papers (' + shown + ' shown, score \u2248 ' + score + ')';
+}
+
 // ── Paper filter ─────────────────────────────────────────────────────────
 function togglePaperFilter(btn) {
   btn.classList.toggle("active");
   applyPaperFilter();
 }
 function applyPaperFilter() {
+  // If a score filter is active, don't override it — just clear it
+  if (_activeScoreFilter !== null) {
+    _activeScoreFilter = null;
+    document.querySelectorAll('.hist-bar-col.selected').forEach(function(el){ el.classList.remove('selected'); });
+  }
   var active = new Set();
   document.querySelectorAll(".pf-toggle.active").forEach(function(b){ active.add(b.dataset.pf); });
   var cards = document.querySelectorAll("#papers-list .paper-card");
