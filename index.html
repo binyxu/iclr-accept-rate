@@ -132,7 +132,11 @@
     .pill-withdraw { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
     .pill-deskreject { background: rgba(71,85,105,0.15); color: #64748b; border: 1px solid rgba(71,85,105,0.3); }
 
-    /* Paper filter toggles */
+    /* All-mode year filter tabs */
+    .yr-filter-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+    .yr-filter-label { color: var(--text2); font-size: 0.82rem; }
+    .yr-toggle { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; color: var(--text2); cursor: pointer; font-size: 0.78rem; font-weight: 600; padding: 4px 12px; transition: all 0.15s; user-select: none; }
+    .yr-toggle.active { background: var(--accent2); border-color: var(--accent2); color: #fff; }
     .paper-filter-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
     .paper-filter-label { color: var(--text2); font-size: 0.82rem; }
     .pf-toggle { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; color: var(--text2); cursor: pointer; font-size: 0.78rem; font-weight: 600; padding: 4px 12px; transition: all 0.15s; user-select: none; }
@@ -258,7 +262,8 @@
     <button class="year-tab" data-year="2024" onclick="setYear(2024)">2024</button>
     <button class="year-tab" data-year="2025" onclick="setYear(2025)">2025</button>
     <button class="year-tab active" data-year="2026" onclick="setYear(2026)">2026</button>
-    <button class="year-tab all-tab" data-year="all" onclick="setYear('all')">Recent 3Y</button>
+    <button class="year-tab all-tab" data-year="3y" onclick="setYear('3y')">Recent 3Y</button>
+    <button class="year-tab all-tab" data-year="5y" onclick="setYear('5y')">Recent 5Y</button>
   </div>
   <div class="year-loading" id="year-loading"></div>
 </div>
@@ -299,9 +304,12 @@
           <button class="lb-min-btn" data-min="30"  onclick="setMinTotal(30)">30</button>
           <button class="lb-min-btn" data-min="50"  onclick="setMinTotal(50)">50</button>
           <button class="lb-min-btn active" data-min="80" onclick="setMinTotal(80)">80</button>
-          <button class="lb-min-btn" data-min="100" onclick="setMinTotal(100)">100</button>
-          <button class="lb-min-btn" data-min="200" onclick="setMinTotal(200)">200</button>
-          <button class="lb-min-btn" data-min="500" onclick="setMinTotal(500)">500</button>
+        </div>
+        <div class="lb-min-controls" style="margin-top:4px">
+          <button class="lb-min-btn" data-min="100"  onclick="setMinTotal(100)">100</button>
+          <button class="lb-min-btn" data-min="200"  onclick="setMinTotal(200)">200</button>
+          <button class="lb-min-btn" data-min="500"  onclick="setMinTotal(500)">500</button>
+          <button class="lb-min-btn" data-min="1000" onclick="setMinTotal(1000)">1000</button>
           <input class="lb-min-input" type="number" min="1" placeholder="自定义"
             onchange="setMinTotal(+this.value||80)">
         </div>
@@ -346,7 +354,12 @@
 <script>
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbX93GzLWrP9QWsVxBG3htSOPyCW0DtL_H6ejKBuFaMHucZ8-M5Z_9GWfo0nTJDzCQnA/exec";
 const YEARS        = [2020,2021,2022,2023,2024,2025,2026];
-const ALL_YEARS    = [2024,2025,2026];   // "ALL" mode only loads recent 3 years
+const MULTI_YEAR   = {
+  '3y': { years: [2024,2025,2026], label: 'Recent 3Y', range: '2024–2026' },
+  '5y': { years: [2022,2023,2024,2025,2026], label: 'Recent 5Y', range: '2022–2026' }
+};
+// Backwards-compat alias used in several places
+var ALL_YEARS = MULTI_YEAR['3y'].years;   // updated dynamically when mode switches
 const DATA_URL_FOR = function(y){ return "https://raw.githubusercontent.com/papercopilot/paperlists/main/iclr/iclr"+y+".json"; };
 const STATUS_ORDER = ["Oral","Spotlight","Poster","Reject","Withdraw","Desk Reject"];
 const ACCEPT_SET   = new Set(["oral","spotlight","poster"]);
@@ -407,25 +420,27 @@ async function setYear(year) {
   var statusEl  = document.getElementById("status");
   var rightCol  = document.querySelector(".right-col");
 
-  if (year === "all") {
-    heroTitle.textContent = "ICLR 2024–2026 Paper Stats";
-    document.title = "ICLR Recent 3 Years Paper Stats";
+  if (year === "3y" || year === "5y") {
+    var cfg = MULTI_YEAR[year];
+    ALL_YEARS = cfg.years;
+    heroTitle.textContent = "ICLR " + cfg.range + " Paper Stats";
+    document.title = "ICLR " + cfg.label + " Paper Stats";
     if (rightCol) rightCol.style.display = "none";
     document.getElementById("total-badge").textContent = "loading...";
-    if (loadingEl) loadingEl.innerHTML = '<span class="spinner"></span> Loading 2024–2026...';
-    statusEl.innerHTML = '<span class="spinner"></span> Loading 2024–2026...';
+    if (loadingEl) loadingEl.innerHTML = '<span class="spinner"></span> Loading ' + cfg.range + '...';
+    statusEl.innerHTML = '<span class="spinner"></span> Loading ' + cfg.range + '...';
 
-    // Load recent 3 years in parallel
+    // Load years in parallel
     var pending = ALL_YEARS.filter(function(y){ return !YEAR_PAPERS[y]; });
     await Promise.all(pending.map(function(y){
       return loadYearData(y).catch(function(e){ console.warn("Failed to load "+y, e); });
     }));
 
     var totalAll = ALL_YEARS.reduce(function(sum,y){ return sum + (YEAR_PAPERS[y]?YEAR_PAPERS[y].length:0); }, 0);
-    document.getElementById("total-badge").textContent = totalAll.toLocaleString() + " papers (2024–2026)";
+    document.getElementById("total-badge").textContent = totalAll.toLocaleString() + " papers (" + cfg.range + ")";
     ALL_PAPERS = null;
     if (loadingEl) loadingEl.textContent = "";
-    statusEl.innerHTML = '<span style="color:var(--green)">&#10003;</span> 2024–2026 loaded. Type a keyword and search!';
+    statusEl.innerHTML = '<span style="color:var(--green)">&#10003;</span> ' + cfg.range + ' loaded. Type a keyword and search!';
 
     // Re-run search if query exists
     var q = document.getElementById("query").value.trim();
@@ -675,7 +690,7 @@ function doSearch() {
   var keywords = raw.split(",").map(function(k){ return k.trim().toLowerCase(); }).filter(Boolean);
   var fields   = getActiveFields();
 
-  if (currentYear === "all") {
+  if (currentYear === "3y" || currentYear === "5y") {
     // Check if any year data missing
     var missing = ALL_YEARS.filter(function(y){ return !YEAR_PAPERS[y]; });
     if (missing.length > 0) { alert("Data still loading, please wait."); return; }
@@ -839,6 +854,9 @@ function hideTrendTip() {
 }
 
 // ── ALL mode render ───────────────────────────────────────────────────────
+var _allYearPapers = {};       // { 2024: [...], 2025: [...], 2026: [...] } for current search
+var _allHistYear   = 'all';    // which year's histogram to show
+
 function renderResultsAll(papers, yearStats, keywords, fields) {
   var main = document.getElementById("main");
   var totalMatched = papers.length;
@@ -847,6 +865,12 @@ function renderResultsAll(papers, yearStats, keywords, fields) {
       '<p>No papers found for <strong>"' + keywords.join(" / ") + '"</strong>.</p></div>';
     return;
   }
+
+  // Cache papers by year for histogram switching
+  _allYearPapers = {};
+  _allHistYear = 'all';
+  papers.forEach(function(p){ if(!_allYearPapers[p._year]) _allYearPapers[p._year]=[]; _allYearPapers[p._year].push(p); });
+  _allYearPapers['all'] = papers;
 
   var kwLabel    = keywords.map(function(k){ return '"'+k+'"'; }).join(" or ");
   var fieldLabel = fields.join(" + ");
@@ -866,6 +890,17 @@ function renderResultsAll(papers, yearStats, keywords, fields) {
     '<div class="stat-card oral"><div class="label">Overall Oral</div><div class="value">'+avgOralPct+'%</div><div class="sub">'+totalOral+' oral / '+totalAccepted+' accepted</div></div>' +
     '<div class="stat-card spotlight"><div class="label">Overall Spotlight</div><div class="value">'+avgSpotPct+'%</div><div class="sub">'+totalSpot+' spotlight</div></div>' +
   '</div>';
+
+  // Histogram tabs
+  var histTabsHTML = '<div class="yr-filter-row" style="margin-bottom:10px">' +
+    '<span class="yr-filter-label">Histogram:</span>' +
+    '<button class="yr-toggle active" data-yr="all" onclick="switchHistYear(this,\'all\')">All</button>' +
+    ALL_YEARS.map(function(y){
+      return '<button class="yr-toggle" data-yr="'+y+'" onclick="switchHistYear(this,'+y+')">'+y+'</button>';
+    }).join('') +
+  '</div>';
+
+  var histHTML = histTabsHTML + buildScoreHistogram(papers);
 
   // Sort papers: by year desc, then status, then rating
   var sortedPapers = papers.slice().sort(function(a,b){
@@ -891,7 +926,7 @@ function renderResultsAll(papers, yearStats, keywords, fields) {
     var title    = (p.title||"(no title)").replace(/</g,"&lt;");
     var cardScore= rating!==null?rating:NaN;
     var defaultHidden = (statusLow==='reject'||statusLow==='withdraw'||statusLow==='desk-reject');
-    return '<div class="paper-card" data-status="'+statusLow+'" data-score="'+cardScore+'"'+(defaultHidden?' style="display:none"':'')+'>'+
+    return '<div class="paper-card" data-status="'+statusLow+'" data-score="'+cardScore+'" data-year="'+p._year+'"'+(defaultHidden?' style="display:none"':'')+'>'+
       '<a href="'+site+'" target="_blank" rel="noopener">'+
       '<div class="paper-top"><span class="status-pill '+pill+'">'+status+'</span>'+
       '<span style="font-size:0.7rem;color:var(--accent2);font-weight:700;margin-left:6px">'+p._year+'</span>'+
@@ -902,12 +937,30 @@ function renderResultsAll(papers, yearStats, keywords, fields) {
       '</div></a></div>';
   }).join("");
 
+  var activeYears = new Set(ALL_YEARS.map(String));
+  var initShown = sortedPapers.filter(function(p){
+    var s=normalizeStatus(p.status).toLowerCase().replace(/\s+/g,'-');
+    return (s==='oral'||s==='spotlight'||s==='poster');
+  }).length;
+
   main.innerHTML =
     '<div class="result-header"><h2>Results for '+kwLabel+'</h2>'+
-    '<span class="count-badge">'+totalTotal.toLocaleString()+' results in 2024–2026 &middot; in '+fieldLabel+'</span></div>'+
+    '<span class="count-badge">'+totalTotal.toLocaleString()+' results in ' + (MULTI_YEAR[currentYear]?MULTI_YEAR[currentYear].range:'multi-year') + ' &middot; in '+fieldLabel+'</span></div>'+
     statsHTML +
     trendHTML +
+    '<div class="score-hist-wrap" id="all-hist-wrap">'+
+      '<h3>Score Distribution</h3>'+
+      histTabsHTML +
+      '<div id="all-hist-chart">'+buildScoreHistogramInner(papers)+'</div>'+
+      buildHistLegend()+
+    '</div>'+
     '<div class="papers-section">'+
+      '<div class="yr-filter-row">'+
+        '<span class="yr-filter-label">Year:</span>'+
+        ALL_YEARS.map(function(y){
+          return '<button class="yr-toggle active" data-yr="'+y+'" onclick="toggleYearFilter(this)">'+y+'</button>';
+        }).join('')+
+      '</div>'+
       '<div class="paper-filter-row">'+
         '<span class="paper-filter-label">Show:</span>'+
         '<button class="pf-toggle active oral"      data-pf="oral"        onclick="togglePaperFilter(this)">Oral</button>'+
@@ -917,21 +970,35 @@ function renderResultsAll(papers, yearStats, keywords, fields) {
         '<button class="pf-toggle withdraw"          data-pf="withdraw"    onclick="togglePaperFilter(this)">Withdraw</button>'+
         '<button class="pf-toggle withdraw"          data-pf="desk-reject" onclick="togglePaperFilter(this)">Desk Reject</button>'+
       '</div>'+
-      '<h3 id="papers-count-label">Papers ('+sortedPapers.filter(function(p){var s=normalizeStatus(p.status).toLowerCase().replace(/\s+/g,'-');return s==='oral'||s==='spotlight'||s==='poster';}).length+' shown)</h3>'+
+      '<h3 id="papers-count-label">Papers ('+initShown+' shown)</h3>'+
       '<div id="papers-list">'+cardsHTML+'</div>'+
     '</div>';
 }
 
+function switchHistYear(btn, year) {
+  document.querySelectorAll('[data-yr]').forEach(function(b){
+    if (b.classList.contains('yr-toggle') && b.closest('#all-hist-wrap'))
+      b.classList.toggle('active', String(b.dataset.yr) === String(year));
+  });
+  var papers = _allYearPapers[year] || [];
+  var chartEl = document.getElementById('all-hist-chart');
+  if (chartEl) chartEl.innerHTML = buildScoreHistogramInner(papers);
+}
+
+function toggleYearFilter(btn) {
+  btn.classList.toggle('active');
+  applyPaperFilter();
+}
+
 // ── Render ────────────────────────────────────────────────────────────────
 // ── Score histogram ─────────────────────────────────────────────────────
-function buildScoreHistogram(papers) {
-  // Collect scores from rating_avg field
-  var statusSeg = {}; // score -> {oral, spotlight, poster, reject, withdraw, other}
+function _calcHistBins(papers) {
+  var statusSeg = {};
   var minScore = Infinity, maxScore = -Infinity;
   papers.forEach(function(p) {
     var rating = Array.isArray(p.rating_avg) ? p.rating_avg[0] : (typeof p.rating_avg === 'number' ? p.rating_avg : null);
     if (rating === null || rating === undefined || isNaN(rating)) return;
-    var score = Math.floor(rating * 2) / 2; // bin by 0.5
+    var score = Math.floor(rating * 2) / 2;
     if (score < minScore) minScore = score;
     if (score > maxScore) maxScore = score;
     var status = normalizeStatus(p.status).toLowerCase();
@@ -943,9 +1010,7 @@ function buildScoreHistogram(papers) {
     else if (status === 'withdraw' || status === 'desk reject') statusSeg[score].withdraw++;
     else statusSeg[score].other++;
   });
-  if (Object.keys(statusSeg).length === 0) return '';
-
-  // Build bins
+  if (Object.keys(statusSeg).length === 0) return null;
   var bins = [];
   for (var s = minScore; s <= maxScore; s += 0.5) {
     var key = Math.round(s * 2) / 2;
@@ -953,12 +1018,15 @@ function buildScoreHistogram(papers) {
     var total = seg.oral + seg.spotlight + seg.poster + seg.reject + seg.withdraw + seg.other;
     bins.push({score: key, total: total, seg: seg});
   }
+  return bins;
+}
 
+function buildScoreHistogramInner(papers) {
+  var bins = _calcHistBins(papers);
+  if (!bins) return '<div style="color:var(--text2);font-size:0.82rem;padding:12px 0">No score data available.</div>';
   var maxCount = Math.max.apply(null, bins.map(function(b){return b.total;}));
   if (maxCount === 0) return '';
-
   var barsHTML = bins.map(function(b) {
-    var heightPct = maxCount > 0 ? (b.total / maxCount * 100) : 0;
     var segs = [
       {cls:'oral',      count: b.seg.oral},
       {cls:'spotlight', count: b.seg.spotlight},
@@ -967,44 +1035,44 @@ function buildScoreHistogram(papers) {
       {cls:'withdraw',  count: b.seg.withdraw},
       {cls:'other',     count: b.seg.other},
     ].filter(function(x){return x.count>0;});
-
     var segHTML = segs.map(function(x) {
       var h = (x.count / maxCount * 100).toFixed(1);
       return '<div class="hist-seg ' + x.cls + '" style="height:' + h + 'px"></div>';
     }).join('');
-
-    // tooltip
-    var tipLines = ['<b>' + b.score + ' pts</b> (' + b.total + ')',];
-    if (b.seg.oral) tipLines.push('Oral: ' + b.seg.oral);
+    var tipLines = ['<b>' + b.score + ' pts</b> (' + b.total + ')'];
+    if (b.seg.oral)      tipLines.push('Oral: '      + b.seg.oral);
     if (b.seg.spotlight) tipLines.push('Spotlight: ' + b.seg.spotlight);
-    if (b.seg.poster) tipLines.push('Poster: ' + b.seg.poster);
-    if (b.seg.reject) tipLines.push('Reject: ' + b.seg.reject);
-    if (b.seg.withdraw) tipLines.push('Withdraw: ' + b.seg.withdraw);
-    var tipHTML = tipLines.join('<br>');
-
+    if (b.seg.poster)    tipLines.push('Poster: '    + b.seg.poster);
+    if (b.seg.reject)    tipLines.push('Reject: '    + b.seg.reject);
+    if (b.seg.withdraw)  tipLines.push('Withdraw: '  + b.seg.withdraw);
     return '<div class="hist-bar-col" data-score="' + b.score + '" onclick="filterByScore(' + b.score + ', this)">' +
       '<div class="hist-bar-segments" style="height:120px">' + segHTML + '</div>' +
       '<div class="hist-xlabel">' + b.score + '</div>' +
       '<div class="hist-score-indicator">&#9650;</div>' +
-      '<div class="hist-tooltip">' + tipHTML + '</div>' +
+      '<div class="hist-tooltip">' + tipLines.join('<br>') + '</div>' +
     '</div>';
   }).join('');
+  return '<div class="hist-chart"><div class="hist-bars">' + barsHTML + '</div><div class="hist-axis"></div></div>';
+}
 
-  var legendHTML = [
-    {cls:'oral',      color:'#fbbf24',         label:'Oral'},
-    {cls:'spotlight', color:'var(--accent2)',   label:'Spotlight'},
-    {cls:'poster',    color:'var(--green)',     label:'Poster'},
-    {cls:'reject',    color:'var(--red)',       label:'Reject'},
-    {cls:'withdraw',  color:'#64748b',          label:'Withdraw'},
+function buildHistLegend() {
+  return '<div class="hist-legend">' + [
+    {color:'#fbbf24',       label:'Oral'},
+    {color:'var(--accent2)',label:'Spotlight'},
+    {color:'var(--green)',  label:'Poster'},
+    {color:'var(--red)',    label:'Reject'},
+    {color:'#64748b',       label:'Withdraw'},
   ].map(function(l){
     return '<div class="hist-legend-item"><div class="hist-legend-dot" style="background:' + l.color + '"></div>' + l.label + '</div>';
-  }).join('');
+  }).join('') + '</div>';
+}
 
+function buildScoreHistogram(papers) {
+  var inner = buildScoreHistogramInner(papers);
+  if (!inner) return '';
   return '<div class="score-hist-wrap">' +
     '<h3>Score Distribution (' + papers.length + ' papers with ratings)</h3>' +
-    '<div class="hist-chart"><div class="hist-bars">' + barsHTML + '</div>' +
-    '<div class="hist-axis"></div></div>' +
-    '<div class="hist-legend">' + legendHTML + '</div>' +
+    inner + buildHistLegend() +
   '</div>';
 }
 
@@ -1155,16 +1223,26 @@ function togglePaperFilter(btn) {
 function applyPaperFilter() {
   var activeStatuses = new Set();
   document.querySelectorAll(".pf-toggle.active").forEach(function(b){ activeStatuses.add(b.dataset.pf); });
+
+  // Year filter (only present in 3Y mode)
+  var activeYears = null;
+  var yrBtns = document.querySelectorAll(".yr-toggle[data-yr]");
+  if (yrBtns.length > 0) {
+    activeYears = new Set();
+    yrBtns.forEach(function(b){ if (b.classList.contains('active')) activeYears.add(String(b.dataset.yr)); });
+  }
+
   var cards = document.querySelectorAll("#papers-list .paper-card");
   var visible = 0;
   cards.forEach(function(c) {
     var statusOk = activeStatuses.has(c.dataset.status);
+    var yearOk   = !activeYears || activeYears.has(String(c.dataset.year));
     var scoreOk  = true;
     if (_activeScoreFilter !== null) {
       var cardScore = parseFloat(c.dataset.score);
       scoreOk = !isNaN(cardScore) && Math.round(cardScore * 2) / 2 === _activeScoreFilter;
     }
-    var show = statusOk && scoreOk;
+    var show = statusOk && yearOk && scoreOk;
     c.style.display = show ? "" : "none";
     if (show) visible++;
   });
