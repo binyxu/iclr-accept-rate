@@ -833,11 +833,14 @@ function toggleTrendLine(key) {
 function showTrendTip(event, year, d) {
   var box = document.getElementById('trend-hover-box');
   if (!box) return;
-  box.innerHTML = '<b>ICLR ' + year + '</b><br>' +
-    'Total: ' + d.total + '<br>' +
-    'Acceptance: ' + d.acceptPct + '%<br>' +
-    'Oral: ' + d.oralPct + '%<br>' +
-    'Spotlight: ' + d.spotPct + '%';
+  var poster = d.accepted - d.oral - d.spotlight;
+  box.innerHTML =
+    '<b>ICLR ' + year + '</b><br>' +
+    'Submissions: ' + d.total + '<br>' +
+    'Accepted: ' + d.accepted + ' (' + d.acceptPct + '%)<br>' +
+    '&nbsp;&nbsp;Oral: ' + d.oral + ' (' + d.oralPct + '%)<br>' +
+    '&nbsp;&nbsp;Spotlight: ' + d.spotlight + ' (' + d.spotPct + '%)<br>' +
+    '&nbsp;&nbsp;Poster: ' + poster;
   var svg = box.parentElement.querySelector('svg');
   var rect = svg.getBoundingClientRect();
   var ex = event.clientX - rect.left;
