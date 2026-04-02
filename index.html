@@ -258,7 +258,7 @@
     <button class="year-tab" data-year="2024" onclick="setYear(2024)">2024</button>
     <button class="year-tab" data-year="2025" onclick="setYear(2025)">2025</button>
     <button class="year-tab active" data-year="2026" onclick="setYear(2026)">2026</button>
-    <button class="year-tab all-tab" data-year="all" onclick="setYear('all')">ALL</button>
+    <button class="year-tab all-tab" data-year="all" onclick="setYear('all')">Recent 3Y</button>
   </div>
   <div class="year-loading" id="year-loading"></div>
 </div>
@@ -294,6 +294,9 @@
         <div class="lb-min-note" id="lb-min-note">Only keywords with &ge;80 matching papers count</div>
         <div class="lb-min-controls">
           <span style="font-size:0.68rem;color:var(--text2);">Min:</span>
+          <button class="lb-min-btn" data-min="10"  onclick="setMinTotal(10)">10</button>
+          <button class="lb-min-btn" data-min="20"  onclick="setMinTotal(20)">20</button>
+          <button class="lb-min-btn" data-min="30"  onclick="setMinTotal(30)">30</button>
           <button class="lb-min-btn" data-min="50"  onclick="setMinTotal(50)">50</button>
           <button class="lb-min-btn active" data-min="80" onclick="setMinTotal(80)">80</button>
           <button class="lb-min-btn" data-min="100" onclick="setMinTotal(100)">100</button>
@@ -343,6 +346,7 @@
 <script>
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbX93GzLWrP9QWsVxBG3htSOPyCW0DtL_H6ejKBuFaMHucZ8-M5Z_9GWfo0nTJDzCQnA/exec";
 const YEARS        = [2020,2021,2022,2023,2024,2025,2026];
+const ALL_YEARS    = [2024,2025,2026];   // "ALL" mode only loads recent 3 years
 const DATA_URL_FOR = function(y){ return "https://raw.githubusercontent.com/papercopilot/paperlists/main/iclr/iclr"+y+".json"; };
 const STATUS_ORDER = ["Oral","Spotlight","Poster","Reject","Withdraw","Desk Reject"];
 const ACCEPT_SET   = new Set(["oral","spotlight","poster"]);
@@ -404,24 +408,24 @@ async function setYear(year) {
   var rightCol  = document.querySelector(".right-col");
 
   if (year === "all") {
-    heroTitle.textContent = "ICLR 2020–2026 Paper Stats";
-    document.title = "ICLR All Years Paper Stats";
+    heroTitle.textContent = "ICLR 2024–2026 Paper Stats";
+    document.title = "ICLR Recent 3 Years Paper Stats";
     if (rightCol) rightCol.style.display = "none";
     document.getElementById("total-badge").textContent = "loading...";
-    if (loadingEl) loadingEl.innerHTML = '<span class="spinner"></span> Loading all years...';
-    statusEl.innerHTML = '<span class="spinner"></span> Loading all years...';
+    if (loadingEl) loadingEl.innerHTML = '<span class="spinner"></span> Loading 2024–2026...';
+    statusEl.innerHTML = '<span class="spinner"></span> Loading 2024–2026...';
 
-    // Load all years in parallel
-    var pending = YEARS.filter(function(y){ return !YEAR_PAPERS[y]; });
+    // Load recent 3 years in parallel
+    var pending = ALL_YEARS.filter(function(y){ return !YEAR_PAPERS[y]; });
     await Promise.all(pending.map(function(y){
       return loadYearData(y).catch(function(e){ console.warn("Failed to load "+y, e); });
     }));
 
-    var totalAll = YEARS.reduce(function(sum,y){ return sum + (YEAR_PAPERS[y]?YEAR_PAPERS[y].length:0); }, 0);
-    document.getElementById("total-badge").textContent = totalAll.toLocaleString() + " papers across all years";
+    var totalAll = ALL_YEARS.reduce(function(sum,y){ return sum + (YEAR_PAPERS[y]?YEAR_PAPERS[y].length:0); }, 0);
+    document.getElementById("total-badge").textContent = totalAll.toLocaleString() + " papers (2024–2026)";
     ALL_PAPERS = null;
     if (loadingEl) loadingEl.textContent = "";
-    statusEl.innerHTML = '<span style="color:var(--green)">&#10003;</span> All years loaded. Type a keyword and search!';
+    statusEl.innerHTML = '<span style="color:var(--green)">&#10003;</span> 2024–2026 loaded. Type a keyword and search!';
 
     // Re-run search if query exists
     var q = document.getElementById("query").value.trim();
@@ -673,12 +677,12 @@ function doSearch() {
 
   if (currentYear === "all") {
     // Check if any year data missing
-    var missing = YEARS.filter(function(y){ return !YEAR_PAPERS[y]; });
+    var missing = ALL_YEARS.filter(function(y){ return !YEAR_PAPERS[y]; });
     if (missing.length > 0) { alert("Data still loading, please wait."); return; }
     // Build per-year stats + combined paper list
     var yearStats = [];
     var allMatchedPapers = [];
-    YEARS.forEach(function(y) {
+    ALL_YEARS.forEach(function(y) {
       var papers = YEAR_PAPERS[y] || [];
       var matched = papers.filter(function(p) {
         var text = fields.map(function(f){ return p[f]||""; }).join(" ").toLowerCase();
@@ -900,7 +904,7 @@ function renderResultsAll(papers, yearStats, keywords, fields) {
 
   main.innerHTML =
     '<div class="result-header"><h2>Results for '+kwLabel+'</h2>'+
-    '<span class="count-badge">'+totalTotal.toLocaleString()+' results across all years &middot; in '+fieldLabel+'</span></div>'+
+    '<span class="count-badge">'+totalTotal.toLocaleString()+' results in 2024–2026 &middot; in '+fieldLabel+'</span></div>'+
     statsHTML +
     trendHTML +
     '<div class="papers-section">'+
