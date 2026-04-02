@@ -101,6 +101,19 @@
     .pill-oral { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
     .pill-spotlight { background: rgba(167,139,250,0.15); color: var(--accent2); border: 1px solid rgba(167,139,250,0.3); }
     .pill-poster { background: rgba(52,211,153,0.12); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+    .pill-reject { background: rgba(248,113,113,0.12); color: var(--red); border: 1px solid rgba(248,113,113,0.25); }
+    .pill-withdraw { background: rgba(100,116,139,0.15); color: #94a3b8; border: 1px solid rgba(100,116,139,0.3); }
+    .pill-deskreject { background: rgba(71,85,105,0.15); color: #64748b; border: 1px solid rgba(71,85,105,0.3); }
+
+    /* Paper filter toggles */
+    .paper-filter-row { display: flex; gap: 7px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    .paper-filter-label { color: var(--text2); font-size: 0.82rem; }
+    .pf-toggle { background: var(--surface); border: 1.5px solid var(--border); border-radius: 20px; color: var(--text2); cursor: pointer; font-size: 0.78rem; font-weight: 600; padding: 4px 12px; transition: all 0.15s; user-select: none; }
+    .pf-toggle.active.oral     { background: rgba(251,191,36,0.15);  border-color: #fbbf24;       color: #fbbf24; }
+    .pf-toggle.active.spotlight{ background: rgba(167,139,250,0.15); border-color: var(--accent2); color: var(--accent2); }
+    .pf-toggle.active.poster   { background: rgba(52,211,153,0.12);  border-color: var(--green);   color: var(--green); }
+    .pf-toggle.active.reject   { background: rgba(248,113,113,0.12); border-color: var(--red);     color: var(--red); }
+    .pf-toggle.active.withdraw { background: rgba(100,116,139,0.15); border-color: #94a3b8;        color: #94a3b8; }
     .paper-title { font-size: 0.92rem; font-weight: 600; color: var(--text); line-height: 1.4; }
     .paper-meta { display: flex; gap: 14px; font-size: 0.76rem; color: var(--text2); flex-wrap: wrap; }
     .paper-meta span { display: flex; align-items: center; gap: 4px; }
@@ -545,7 +558,7 @@ function buildScoreHistogram(papers) {
   papers.forEach(function(p) {
     var rating = Array.isArray(p.rating_avg) ? p.rating_avg[0] : (typeof p.rating_avg === 'number' ? p.rating_avg : null);
     if (rating === null || rating === undefined || isNaN(rating)) return;
-    var score = Math.floor(rating * 2) / 2; // bin by 0.5
+    var score = Math.floor(rating * 4) / 4; // bin by 0.25
     if (score < minScore) minScore = score;
     if (score > maxScore) maxScore = score;
     var status = normalizeStatus(p.status).toLowerCase();
@@ -561,8 +574,8 @@ function buildScoreHistogram(papers) {
 
   // Build bins
   var bins = [];
-  for (var s = minScore; s <= maxScore; s += 0.5) {
-    var key = Math.round(s * 2) / 2;
+  for (var s = minScore; s <= maxScore; s += 0.25) {
+    var key = Math.round(s * 4) / 4;
     var seg = statusSeg[key] || {oral:0,spotlight:0,poster:0,reject:0,withdraw:0,other:0};
     var total = seg.oral + seg.spotlight + seg.poster + seg.reject + seg.withdraw + seg.other;
     bins.push({score: key, total: total, seg: seg});
@@ -648,11 +661,12 @@ function renderResults(papers, keywords, fields) {
 
   recordSearch(keywords.join(" "), fields.join(","), total, accepted, acceptPct, oral, oralPct);
 
-  var acceptedPapers = papers
-    .filter(function(p){ return ACCEPT_SET.has(normalizeStatus(p.status).toLowerCase()); })
+  var allSortedPapers = papers
+    .slice()
     .sort(function(a,b){
       var ai=STATUS_ORDER.indexOf(normalizeStatus(a.status));
       var bi=STATUS_ORDER.indexOf(normalizeStatus(b.status));
+      if (ai<0) ai=99; if (bi<0) bi=99;
       return ai!==bi?ai-bi:(a.title||"").localeCompare(b.title||"");
     });
 
@@ -672,14 +686,21 @@ function renderResults(papers, keywords, fields) {
       '<div class="bar-info">' + r.count + ' &middot; ' + pct(r.count) + '</div></div>';
   }).join("");
 
-  var cardsHTML = acceptedPapers.map(function(p){
+  var PILL_CLASS_EXT = {
+    Oral:'pill-oral', Spotlight:'pill-spotlight', Poster:'pill-poster',
+    Reject:'pill-reject', Withdraw:'pill-withdraw', 'Desk Reject':'pill-deskreject'
+  };
+  var cardsHTML = allSortedPapers.map(function(p){
     var status = normalizeStatus(p.status);
-    var pill   = PILL_CLASS[status]||"pill-poster";
-    var rating = Array.isArray(p.rating_avg)?p.rating_avg[0]:null;
+    var statusLow = status.toLowerCase().replace(/\s+/g,'-');
+    var pill   = PILL_CLASS_EXT[status]||"pill-poster";
+    var rating = Array.isArray(p.rating_avg)?p.rating_avg[0]:(typeof p.rating_avg==='number'?p.rating_avg:null);
     var area   = p.primary_area||"";
     var site   = p.site||"#";
     var title  = (p.title||"(no title)").replace(/</g,"&lt;");
-    return '<div class="paper-card"><a href="' + site + '" target="_blank" rel="noopener">' +
+    var defaultHidden = (statusLow==='reject'||statusLow==='withdraw'||statusLow==='desk-reject');
+    return '<div class="paper-card" data-status="' + statusLow + '"' + (defaultHidden?' style="display:none"':'') + '>' +
+      '<a href="' + site + '" target="_blank" rel="noopener">' +
       '<div class="paper-top"><span class="status-pill ' + pill + '">' + status + '</span>' +
       '<div class="paper-title">' + title + '</div></div>' +
       '<div class="paper-meta">' +
@@ -707,7 +728,43 @@ function renderResults(papers, keywords, fields) {
     '</div>' +
     histHTML +
     '<div class="breakdown"><h3>Status Breakdown</h3>' + barsHTML + '</div>' +
-    (acceptedPapers.length>0?'<div class="papers-section"><h3>Accepted Papers (' + acceptedPapers.length + ')</h3>' + cardsHTML + '</div>':"");
+    (allSortedPapers.length>0?
+      '<div class="papers-section">' +
+        '<div class="paper-filter-row">' +
+          '<span class="paper-filter-label">Show:</span>' +
+          '<button class="pf-toggle active oral"     data-pf="oral"        onclick="togglePaperFilter(this)">Oral</button>' +
+          '<button class="pf-toggle active spotlight" data-pf="spotlight"   onclick="togglePaperFilter(this)">Spotlight</button>' +
+          '<button class="pf-toggle active poster"   data-pf="poster"      onclick="togglePaperFilter(this)">Poster</button>' +
+          '<button class="pf-toggle reject"           data-pf="reject"      onclick="togglePaperFilter(this)">Reject</button>' +
+          '<button class="pf-toggle withdraw"         data-pf="withdraw"    onclick="togglePaperFilter(this)">Withdraw</button>' +
+          '<button class="pf-toggle withdraw"         data-pf="desk-reject" onclick="togglePaperFilter(this)">Desk Reject</button>' +
+        '</div>' +
+        '<h3 id="papers-count-label">Papers (' + allSortedPapers.length + ')</h3>' +
+        '<div id="papers-list">' + cardsHTML + '</div>' +
+      '</div>'
+    :"");
+  // Update initial visible count (only oral/spotlight/poster shown by default)
+  var label = document.getElementById("papers-count-label");
+  if (label) label.textContent = "Papers (" + (oral+spotlight+poster) + " shown)";
+}
+
+// ── Paper filter ─────────────────────────────────────────────────────────
+function togglePaperFilter(btn) {
+  btn.classList.toggle("active");
+  applyPaperFilter();
+}
+function applyPaperFilter() {
+  var active = new Set();
+  document.querySelectorAll(".pf-toggle.active").forEach(function(b){ active.add(b.dataset.pf); });
+  var cards = document.querySelectorAll("#papers-list .paper-card");
+  var visible = 0;
+  cards.forEach(function(c) {
+    var show = active.has(c.dataset.status);
+    c.style.display = show ? "" : "none";
+    if (show) visible++;
+  });
+  var label = document.getElementById("papers-count-label");
+  if (label) label.textContent = "Papers (" + visible + " shown)";
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────
