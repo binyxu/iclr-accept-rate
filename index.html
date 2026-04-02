@@ -673,7 +673,14 @@ function renderResults(papers, keywords, fields) {
       var ai=STATUS_ORDER.indexOf(normalizeStatus(a.status));
       var bi=STATUS_ORDER.indexOf(normalizeStatus(b.status));
       if (ai<0) ai=99; if (bi<0) bi=99;
-      return ai!==bi?ai-bi:(a.title||"").localeCompare(b.title||"");
+      if (ai!==bi) return ai-bi;
+      // same status: sort by rating_avg descending
+      var ra = Array.isArray(a.rating_avg)?a.rating_avg[0]:(typeof a.rating_avg==='number'?a.rating_avg:null);
+      var rb = Array.isArray(b.rating_avg)?b.rating_avg[0]:(typeof b.rating_avg==='number'?b.rating_avg:null);
+      if (ra===null && rb===null) return 0;
+      if (ra===null) return 1;
+      if (rb===null) return -1;
+      return rb - ra;
     });
 
   var barRows = [
