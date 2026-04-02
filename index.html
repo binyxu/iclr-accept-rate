@@ -289,7 +289,7 @@
   <div class="right-col">
     <div class="leaderboard">
       <div class="lb-header">
-        <h2>&#127942; Search Leaderboard</h2>
+        <h2>&#127942; Search Leaderboard <span id="lb-year-badge" style="font-size:0.7rem;font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:2px 8px;color:var(--accent);vertical-align:middle;margin-left:4px">2026</span></h2>
         <p>Funniest acceptance rates found so far</p>
         <div class="lb-min-note" id="lb-min-note">Only keywords with &ge;80 matching papers count</div>
         <div class="lb-min-controls">
@@ -431,6 +431,8 @@ async function setYear(year) {
     heroTitle.textContent = "ICLR " + year + " Paper Stats";
     document.title = "ICLR " + year + " Paper Stats";
     if (rightCol) rightCol.style.display = "";
+    var lbYearBadge = document.getElementById("lb-year-badge");
+    if (lbYearBadge) lbYearBadge.textContent = year;
     if (loadingEl) loadingEl.textContent = "";
 
     if (YEAR_PAPERS[year]) {
@@ -455,6 +457,10 @@ async function setYear(year) {
     // Re-run search if query exists
     var q = document.getElementById("query").value.trim();
     if (q) doSearch();
+    // Refresh leaderboard for the new year
+    LB_DATA = null;
+    renderLb();
+    fetchLeaderboard();
   }
 }
 
@@ -599,13 +605,14 @@ function renderLb() {
 }
 
 async function fetchLeaderboard() {
+  if (currentYear === "all") return;   // leaderboard hidden in ALL mode
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("YOUR_") === 0) {
     document.getElementById("lb-body").innerHTML =
       '<div class="lb-empty">&#9881; Configure Apps Script URL to enable.</div>';
     return;
   }
   try {
-    var resp = await fetch(APPS_SCRIPT_URL + "?action=leaderboard&min_total=" + lbMinTotal);
+    var resp = await fetch(APPS_SCRIPT_URL + "?action=leaderboard&min_total=" + lbMinTotal + "&year=" + currentYear);
     LB_DATA  = await resp.json();
     lbShowCount = 10;
     if (LB_DATA.ok) {
@@ -620,9 +627,10 @@ async function fetchLeaderboard() {
 
 async function recordSearch(keyword, fields, total, accepted, acceptPct, oral, oralPct) {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("YOUR_") === 0) return;
+  if (currentYear === "all") return;
   try {
     var p = new URLSearchParams({
-      action:"record", keyword:keyword, fields:fields,
+      action:"record", keyword:keyword, fields:fields, year:currentYear,
       total:total, accepted:accepted, accept_pct:acceptPct, oral:oral, oral_pct:oralPct
     });
     await fetch(APPS_SCRIPT_URL + "?" + p.toString());
