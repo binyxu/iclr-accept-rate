@@ -32,6 +32,33 @@
     .badge span { color: var(--accent); font-weight: 600; }
     .badge.pv span { color: var(--accent2); }
 
+    /* Year selector */
+    .year-selector { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-top: 16px; padding: 0 24px; }
+    .year-tab { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 20px; color: var(--text2); cursor: pointer; font-size: 0.82rem; font-weight: 600; padding: 5px 14px; transition: all 0.15s; user-select: none; }
+    .year-tab:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+    .year-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .year-tab.all-tab.active { background: linear-gradient(90deg, var(--accent), var(--accent2)); border-color: var(--accent2); }
+    .year-loading { font-size: 0.75rem; color: var(--text2); text-align: center; margin-top: 8px; min-height: 18px; }
+
+    /* Trend card */
+    .trend-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 24px; }
+    .trend-card h3 { font-size: 0.85rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+    .trend-metric-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .trend-metric-tab { background: transparent; border: 1.5px solid var(--border); border-radius: 20px; color: var(--text2); cursor: pointer; font-size: 0.75rem; font-weight: 600; padding: 3px 12px; transition: all 0.15s; user-select: none; }
+    .trend-metric-tab:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+    .trend-metric-tab.accept.active  { border-color: var(--green);   color: var(--green);   background: rgba(52,211,153,0.1); }
+    .trend-metric-tab.oral.active    { border-color: #fbbf24;         color: #fbbf24;         background: rgba(251,191,36,0.1); }
+    .trend-metric-tab.spotlight.active { border-color: var(--accent2); color: var(--accent2); background: rgba(167,139,250,0.1); }
+    .trend-svg-wrap { position: relative; width: 100%; }
+    .trend-svg-wrap svg { width: 100%; overflow: visible; }
+    .trend-dot { cursor: pointer; transition: r 0.1s; }
+    .trend-dot:hover { r: 5; }
+    .trend-hover-box { position: absolute; pointer-events: none; background: #1e2235; border: 1px solid var(--border); border-radius: 8px; padding: 7px 11px; font-size: 0.73rem; color: var(--text); line-height: 1.8; white-space: nowrap; z-index: 20; display: none; }
+    .trend-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
+    .trend-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text2); cursor: pointer; user-select: none; }
+    .trend-legend-item.hidden { opacity: 0.35; }
+    .trend-legend-dot { width: 10px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+
     /* Layout */
     .page-body { display: flex; align-items: flex-start; gap: 24px; max-width: 1200px; margin: 0 auto; padding: 32px 16px 60px; }
     .left-col { flex: 1; min-width: 0; }
@@ -217,12 +244,23 @@
 <body>
 
 <div class="hero">
-  <h1>ICLR 2026 Paper Stats</h1>
+  <h1 id="hero-title">ICLR 2026 Paper Stats</h1>
   <p>Search papers by keyword and instantly see acceptance rates, oral rates, and more.</p>
   <div class="hero-badges">
     <div class="badge">Submissions: <span id="total-badge">loading...</span></div>
     <div class="badge pv">&#128065; Total visits: <span id="pv-total">...</span></div>
   </div>
+  <div class="year-selector">
+    <button class="year-tab" data-year="2020" onclick="setYear(2020)">2020</button>
+    <button class="year-tab" data-year="2021" onclick="setYear(2021)">2021</button>
+    <button class="year-tab" data-year="2022" onclick="setYear(2022)">2022</button>
+    <button class="year-tab" data-year="2023" onclick="setYear(2023)">2023</button>
+    <button class="year-tab" data-year="2024" onclick="setYear(2024)">2024</button>
+    <button class="year-tab" data-year="2025" onclick="setYear(2025)">2025</button>
+    <button class="year-tab active" data-year="2026" onclick="setYear(2026)">2026</button>
+    <button class="year-tab all-tab" data-year="all" onclick="setYear('all')">ALL</button>
+  </div>
+  <div class="year-loading" id="year-loading"></div>
 </div>
 
 <div class="page-body">
@@ -304,37 +342,119 @@
 
 <script>
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwbX93GzLWrP9QWsVxBG3htSOPyCW0DtL_H6ejKBuFaMHucZ8-M5Z_9GWfo0nTJDzCQnA/exec";
-const DATA_URL     = "https://raw.githubusercontent.com/papercopilot/paperlists/main/iclr/iclr2026.json";
+const YEARS        = [2020,2021,2022,2023,2024,2025,2026];
+const DATA_URL_FOR = function(y){ return "https://raw.githubusercontent.com/papercopilot/paperlists/main/iclr/iclr"+y+".json"; };
 const STATUS_ORDER = ["Oral","Spotlight","Poster","Reject","Withdraw","Desk Reject"];
 const ACCEPT_SET   = new Set(["oral","spotlight","poster"]);
 const PILL_CLASS   = {Oral:"pill-oral",Spotlight:"pill-spotlight",Poster:"pill-poster"};
 const RANK_CLASS   = ["gold","silver","bronze"];
-const RANK_EMOJI   = ["#127947;","#127948;","#127949;"];  // medal codepoints unused, use text below
 const FIELD_SHORT  = {title:"title",abstract:"abs",keywords:"kw",tldr:"tldr"};
 
-let ALL_PAPERS = null;
-let LB_DATA    = null;   // cached leaderboard response
+let ALL_PAPERS  = null;   // active single-year papers (null in all mode)
+let YEAR_PAPERS = {};     // cache: { 2026: [...], ... }
+let LB_DATA     = null;
+let currentYear = 2026;
 
 // Leaderboard state
-let lbL1 = "accept";   // "accept" | "oral"
-let lbL2 = "all";      // "all" | "title" | "abstract" | "keywords" | "tldr"
-let lbL3 = "high";     // "high" | "low"  (only for accept)
+let lbL1 = "accept";
+let lbL2 = "all";
+let lbL3 = "high";
 let lbMinTotal  = 80;
 let lbShowCount = 10;
 
 // ── Data ─────────────────────────────────────────────────────────────────
+async function loadYearData(year) {
+  if (YEAR_PAPERS[year]) return YEAR_PAPERS[year];
+  var resp = await fetch(DATA_URL_FOR(year));
+  if (!resp.ok) throw new Error("HTTP " + resp.status);
+  var data = await resp.json();
+  YEAR_PAPERS[year] = data;
+  return data;
+}
+
 async function loadData() {
+  var statusEl = document.getElementById("status");
+  var loadingEl = document.getElementById("year-loading");
   try {
-    var resp = await fetch(DATA_URL);
-    if (!resp.ok) throw new Error("HTTP " + resp.status);
-    ALL_PAPERS = await resp.json();
+    statusEl.innerHTML = '<span class="spinner"></span> Loading paper data...';
+    var data = await loadYearData(2026);
+    ALL_PAPERS = data;
     document.getElementById("total-badge").textContent = ALL_PAPERS.length.toLocaleString() + " papers";
-    document.getElementById("status").innerHTML =
+    statusEl.innerHTML =
       '<span style="color:var(--green)">&#10003;</span> Data loaded &mdash; ' +
       ALL_PAPERS.length.toLocaleString() + " papers. Type a keyword and search!";
+    if (loadingEl) loadingEl.textContent = "";
   } catch (e) {
-    document.getElementById("status").innerHTML =
-      '<span style="color:var(--red)">&#10007; Failed to load: ' + e.message + "</span>";
+    statusEl.innerHTML = '<span style="color:var(--red)">&#10007; Failed to load: ' + e.message + "</span>";
+  }
+}
+
+async function setYear(year) {
+  currentYear = year;
+  _activeScoreFilter = null;
+
+  // Update tabs
+  document.querySelectorAll(".year-tab").forEach(function(btn) {
+    btn.classList.toggle("active", String(btn.dataset.year) === String(year));
+  });
+
+  var heroTitle = document.getElementById("hero-title");
+  var loadingEl = document.getElementById("year-loading");
+  var statusEl  = document.getElementById("status");
+  var rightCol  = document.querySelector(".right-col");
+
+  if (year === "all") {
+    heroTitle.textContent = "ICLR 2020–2026 Paper Stats";
+    document.title = "ICLR All Years Paper Stats";
+    if (rightCol) rightCol.style.display = "none";
+    document.getElementById("total-badge").textContent = "loading...";
+    if (loadingEl) loadingEl.innerHTML = '<span class="spinner"></span> Loading all years...';
+    statusEl.innerHTML = '<span class="spinner"></span> Loading all years...';
+
+    // Load all years in parallel
+    var pending = YEARS.filter(function(y){ return !YEAR_PAPERS[y]; });
+    await Promise.all(pending.map(function(y){
+      return loadYearData(y).catch(function(e){ console.warn("Failed to load "+y, e); });
+    }));
+
+    var totalAll = YEARS.reduce(function(sum,y){ return sum + (YEAR_PAPERS[y]?YEAR_PAPERS[y].length:0); }, 0);
+    document.getElementById("total-badge").textContent = totalAll.toLocaleString() + " papers across all years";
+    ALL_PAPERS = null;
+    if (loadingEl) loadingEl.textContent = "";
+    statusEl.innerHTML = '<span style="color:var(--green)">&#10003;</span> All years loaded. Type a keyword and search!';
+
+    // Re-run search if query exists
+    var q = document.getElementById("query").value.trim();
+    if (q) doSearch();
+
+  } else {
+    heroTitle.textContent = "ICLR " + year + " Paper Stats";
+    document.title = "ICLR " + year + " Paper Stats";
+    if (rightCol) rightCol.style.display = "";
+    if (loadingEl) loadingEl.textContent = "";
+
+    if (YEAR_PAPERS[year]) {
+      ALL_PAPERS = YEAR_PAPERS[year];
+      document.getElementById("total-badge").textContent = ALL_PAPERS.length.toLocaleString() + " papers";
+      statusEl.innerHTML = '<span style="color:var(--green)">&#10003;</span> Data loaded &mdash; ' +
+        ALL_PAPERS.length.toLocaleString() + " papers. Type a keyword and search!";
+    } else {
+      statusEl.innerHTML = '<span class="spinner"></span> Loading ' + year + ' data...';
+      try {
+        var data = await loadYearData(year);
+        ALL_PAPERS = data;
+        document.getElementById("total-badge").textContent = ALL_PAPERS.length.toLocaleString() + " papers";
+        statusEl.innerHTML = '<span style="color:var(--green)">&#10003;</span> Data loaded &mdash; ' +
+          ALL_PAPERS.length.toLocaleString() + " papers. Type a keyword and search!";
+      } catch(e) {
+        statusEl.innerHTML = '<span style="color:var(--red)">&#10007; Failed to load: ' + e.message + "</span>";
+        return;
+      }
+    }
+
+    // Re-run search if query exists
+    var q = document.getElementById("query").value.trim();
+    if (q) doSearch();
   }
 }
 
@@ -538,20 +658,257 @@ function normalizeStatus(raw) {
   return raw.trim();
 }
 function doSearch() {
-  if (!ALL_PAPERS) { alert("Data still loading, please wait."); return; }
   var raw = document.getElementById("query").value.trim();
   if (!raw) return;
   var keywords = raw.split(",").map(function(k){ return k.trim().toLowerCase(); }).filter(Boolean);
-  var fields  = getActiveFields();
-  var matched = ALL_PAPERS.filter(function(p) {
-    var text = fields.map(function(f){ return p[f]||""; }).join(" ").toLowerCase();
-    return keywords.some(function(kw){ return text.indexOf(kw)>=0; });
-  });
-  renderResults(matched, keywords, fields);
+  var fields   = getActiveFields();
+
+  if (currentYear === "all") {
+    // Check if any year data missing
+    var missing = YEARS.filter(function(y){ return !YEAR_PAPERS[y]; });
+    if (missing.length > 0) { alert("Data still loading, please wait."); return; }
+    // Build per-year stats + combined paper list
+    var yearStats = [];
+    var allMatchedPapers = [];
+    YEARS.forEach(function(y) {
+      var papers = YEAR_PAPERS[y] || [];
+      var matched = papers.filter(function(p) {
+        var text = fields.map(function(f){ return p[f]||""; }).join(" ").toLowerCase();
+        return keywords.some(function(kw){ return text.indexOf(kw)>=0; });
+      });
+      // Tag each paper with year
+      matched.forEach(function(p){ p._year = y; });
+      var counts = {};
+      STATUS_ORDER.forEach(function(s){ counts[s]=0; });
+      matched.forEach(function(p){ var s=normalizeStatus(p.status); counts[s]=(counts[s]||0)+1; });
+      var total    = matched.length;
+      var accepted = ["Oral","Spotlight","Poster"].reduce(function(a,s){ return a+(counts[s]||0); },0);
+      var oral     = counts["Oral"]||0;
+      var spotlight= counts["Spotlight"]||0;
+      yearStats.push({year:y, total:total, accepted:accepted, oral:oral, spotlight:spotlight,
+        acceptPct: total ? +(accepted/total*100).toFixed(2) : 0,
+        oralPct:   accepted ? +(oral/accepted*100).toFixed(2) : 0,
+        spotPct:   accepted ? +(spotlight/accepted*100).toFixed(2) : 0
+      });
+      allMatchedPapers = allMatchedPapers.concat(matched);
+    });
+    renderResultsAll(allMatchedPapers, yearStats, keywords, fields);
+  } else {
+    if (!ALL_PAPERS) { alert("Data still loading, please wait."); return; }
+    var matched = ALL_PAPERS.filter(function(p) {
+      var text = fields.map(function(f){ return p[f]||""; }).join(" ").toLowerCase();
+      return keywords.some(function(kw){ return text.indexOf(kw)>=0; });
+    });
+    renderResults(matched, keywords, fields);
+  }
 }
 document.getElementById("query").addEventListener("keydown", function(e) {
   if (e.key==="Enter") doSearch();
 });
+
+// ── Trend card (ALL mode) ────────────────────────────────────────────────
+var _trendVisible = {accept: true, oral: true, spotlight: true};
+
+function buildTrendCard(yearStats, keywords) {
+  // Filter years with data
+  var dataYears = yearStats.filter(function(d){ return d.total > 0; });
+  if (dataYears.length === 0) return '<div class="trend-card"><h3>Year-over-Year Trend</h3><p style="color:var(--text2);font-size:0.85rem">No matching papers found across any year.</p></div>';
+
+  var W = 540, H = 160, padL = 38, padR = 14, padT = 14, padB = 30;
+  var innerW = W - padL - padR;
+  var innerH = H - padT - padB;
+
+  var xs = dataYears.length === 1
+    ? [padL + innerW / 2]
+    : dataYears.map(function(d, i){ return padL + i / (dataYears.length - 1) * innerW; });
+
+  // Compute y scale (0 to max pct, rounded up to next 10)
+  var allVals = [];
+  dataYears.forEach(function(d){ allVals.push(d.acceptPct, d.oralPct, d.spotPct); });
+  var maxVal = Math.ceil(Math.max.apply(null, allVals) / 10) * 10 || 10;
+
+  function toY(pct){ return padT + innerH - (pct / maxVal) * innerH; }
+
+  function makeLine(key, color) {
+    var pts = dataYears.map(function(d,i){
+      var pct = key==='accept'?d.acceptPct:key==='oral'?d.oralPct:d.spotPct;
+      return xs[i]+','+toY(pct);
+    }).join(' ');
+    var opacity = _trendVisible[key] ? 1 : 0;
+    return '<polyline id="trend-line-'+key+'" points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="'+opacity+'"/>';
+  }
+
+  function makeDots(key, color) {
+    return dataYears.map(function(d,i){
+      var pct = key==='accept'?d.acceptPct:key==='oral'?d.oralPct:d.spotPct;
+      var opacity = _trendVisible[key] ? 1 : 0;
+      return '<circle class="trend-dot" id="trend-dot-'+key+'-'+d.year+'" cx="'+xs[i]+'" cy="'+toY(pct)+'" r="3.5" fill="'+color+'" stroke="var(--bg)" stroke-width="1.5" opacity="'+opacity+'"'+
+        ' onmouseover="showTrendTip(event,'+d.year+','+JSON.stringify(d)+')"'+
+        ' onmouseout="hideTrendTip()"'+
+        '/>';
+    }).join('');
+  }
+
+  // Y-axis labels
+  var yLabels = '';
+  for (var pct = 0; pct <= maxVal; pct += 10) {
+    var y = toY(pct);
+    yLabels += '<line x1="'+padL+'" y1="'+y+'" x2="'+(padL+innerW)+'" y2="'+y+'" stroke="var(--border)" stroke-width="0.5"/>';
+    yLabels += '<text x="'+(padL-5)+'" y="'+(y+4)+'" font-size="9" fill="var(--text2)" text-anchor="end">'+pct+'%</text>';
+  }
+
+  // X-axis labels
+  var xLabels = dataYears.map(function(d,i){
+    return '<text x="'+xs[i]+'" y="'+(H-6)+'" font-size="9" fill="var(--text2)" text-anchor="middle">'+d.year+'</text>';
+  }).join('');
+
+  var svgContent = yLabels + xLabels +
+    makeLine('accept','#34d399') + makeLine('oral','#fbbf24') + makeLine('spotlight','#a78bfa') +
+    makeDots('accept','#34d399') + makeDots('oral','#fbbf24') + makeDots('spotlight','#a78bfa');
+
+  var legendHTML = [
+    {key:'accept',   color:'#34d399', label:'Acceptance Rate'},
+    {key:'oral',     color:'#fbbf24', label:'Oral Rate'},
+    {key:'spotlight',color:'#a78bfa', label:'Spotlight Rate'},
+  ].map(function(l){
+    var hidden = _trendVisible[l.key] ? '' : ' hidden';
+    return '<div class="trend-legend-item'+hidden+'" onclick="toggleTrendLine(\''+l.key+'\')">' +
+      '<div class="trend-legend-dot" style="background:'+l.color+';height:3px;width:18px"></div>' +
+      l.label + '</div>';
+  }).join('');
+
+  var kwLabel = keywords.map(function(k){ return '"'+k+'"'; }).join(' / ');
+
+  return '<div class="trend-card">' +
+    '<h3>Year-over-Year Trend for ' + kwLabel + '</h3>' +
+    '<div class="trend-svg-wrap">' +
+      '<svg viewBox="0 0 '+W+' '+H+'" style="height:'+H+'px">' + svgContent + '</svg>' +
+      '<div class="trend-hover-box" id="trend-hover-box"></div>' +
+    '</div>' +
+    '<div class="trend-legend">' + legendHTML + '</div>' +
+  '</div>';
+}
+
+function toggleTrendLine(key) {
+  _trendVisible[key] = !_trendVisible[key];
+  var opacity = _trendVisible[key] ? 1 : 0;
+  var line = document.getElementById('trend-line-'+key);
+  if (line) line.setAttribute('opacity', opacity);
+  document.querySelectorAll('[id^="trend-dot-'+key+'-"]').forEach(function(el){
+    el.setAttribute('opacity', opacity);
+  });
+  document.querySelectorAll('.trend-legend-item').forEach(function(el, i){
+    var keys = ['accept','oral','spotlight'];
+    if (keys[i] === key) el.classList.toggle('hidden', !_trendVisible[key]);
+  });
+}
+
+function showTrendTip(event, year, d) {
+  var box = document.getElementById('trend-hover-box');
+  if (!box) return;
+  box.innerHTML = '<b>ICLR ' + year + '</b><br>' +
+    'Total: ' + d.total + '<br>' +
+    'Acceptance: ' + d.acceptPct + '%<br>' +
+    'Oral: ' + d.oralPct + '%<br>' +
+    'Spotlight: ' + d.spotPct + '%';
+  var svg = box.parentElement.querySelector('svg');
+  var rect = svg.getBoundingClientRect();
+  var ex = event.clientX - rect.left;
+  var ey = event.clientY - rect.top;
+  var left = ex + 12;
+  if (left + 170 > rect.width) left = ex - 180;
+  box.style.left = left + 'px';
+  box.style.top  = (ey - 10) + 'px';
+  box.style.display = 'block';
+}
+function hideTrendTip() {
+  var box = document.getElementById('trend-hover-box');
+  if (box) box.style.display = 'none';
+}
+
+// ── ALL mode render ───────────────────────────────────────────────────────
+function renderResultsAll(papers, yearStats, keywords, fields) {
+  var main = document.getElementById("main");
+  var totalMatched = papers.length;
+  if (totalMatched === 0) {
+    main.innerHTML = '<div class="empty"><div class="icon">&#128269;</div>' +
+      '<p>No papers found for <strong>"' + keywords.join(" / ") + '"</strong>.</p></div>';
+    return;
+  }
+
+  var kwLabel    = keywords.map(function(k){ return '"'+k+'"'; }).join(" or ");
+  var fieldLabel = fields.join(" + ");
+  var trendHTML  = buildTrendCard(yearStats, keywords);
+
+  // Summary stats across all years
+  var totalTotal    = yearStats.reduce(function(s,d){ return s+d.total; },0);
+  var totalAccepted = yearStats.reduce(function(s,d){ return s+d.accepted; },0);
+  var totalOral     = yearStats.reduce(function(s,d){ return s+d.oral; },0);
+  var totalSpot     = yearStats.reduce(function(s,d){ return s+d.spotlight; },0);
+  var avgAcceptPct  = totalTotal ? (totalAccepted/totalTotal*100).toFixed(1) : '—';
+  var avgOralPct    = totalAccepted ? (totalOral/totalAccepted*100).toFixed(1) : '—';
+  var avgSpotPct    = totalAccepted ? (totalSpot/totalAccepted*100).toFixed(1) : '—';
+
+  var statsHTML = '<div class="stats-grid">' +
+    '<div class="stat-card accept"><div class="label">Overall Acceptance</div><div class="value">'+avgAcceptPct+'%</div><div class="sub">'+totalAccepted+' / '+totalTotal+' papers</div></div>' +
+    '<div class="stat-card oral"><div class="label">Overall Oral</div><div class="value">'+avgOralPct+'%</div><div class="sub">'+totalOral+' oral / '+totalAccepted+' accepted</div></div>' +
+    '<div class="stat-card spotlight"><div class="label">Overall Spotlight</div><div class="value">'+avgSpotPct+'%</div><div class="sub">'+totalSpot+' spotlight</div></div>' +
+  '</div>';
+
+  // Sort papers: by year desc, then status, then rating
+  var sortedPapers = papers.slice().sort(function(a,b){
+    if ((b._year||0) !== (a._year||0)) return (b._year||0)-(a._year||0);
+    var ai=STATUS_ORDER.indexOf(normalizeStatus(a.status)); if(ai<0)ai=99;
+    var bi=STATUS_ORDER.indexOf(normalizeStatus(b.status)); if(bi<0)bi=99;
+    if (ai!==bi) return ai-bi;
+    var ra=Array.isArray(a.rating_avg)?a.rating_avg[0]:(typeof a.rating_avg==='number'?a.rating_avg:null);
+    var rb=Array.isArray(b.rating_avg)?b.rating_avg[0]:(typeof b.rating_avg==='number'?b.rating_avg:null);
+    if(ra===null&&rb===null) return 0; if(ra===null) return 1; if(rb===null) return -1;
+    return rb-ra;
+  });
+
+  var PILL_CLASS_EXT = {Oral:'pill-oral',Spotlight:'pill-spotlight',Poster:'pill-poster',
+    Reject:'pill-reject',Withdraw:'pill-withdraw','Desk Reject':'pill-deskreject'};
+  var cardsHTML = sortedPapers.map(function(p){
+    var status   = normalizeStatus(p.status);
+    var statusLow= status.toLowerCase().replace(/\s+/g,'-');
+    var pill     = PILL_CLASS_EXT[status]||"pill-poster";
+    var rating   = Array.isArray(p.rating_avg)?p.rating_avg[0]:(typeof p.rating_avg==='number'?p.rating_avg:null);
+    var area     = p.primary_area||"";
+    var site     = p.site||"#";
+    var title    = (p.title||"(no title)").replace(/</g,"&lt;");
+    var cardScore= rating!==null?rating:NaN;
+    var defaultHidden = (statusLow==='reject'||statusLow==='withdraw'||statusLow==='desk-reject');
+    return '<div class="paper-card" data-status="'+statusLow+'" data-score="'+cardScore+'"'+(defaultHidden?' style="display:none"':'')+'>'+
+      '<a href="'+site+'" target="_blank" rel="noopener">'+
+      '<div class="paper-top"><span class="status-pill '+pill+'">'+status+'</span>'+
+      '<span style="font-size:0.7rem;color:var(--accent2);font-weight:700;margin-left:6px">'+p._year+'</span>'+
+      '<div class="paper-title">'+title+'</div></div>'+
+      '<div class="paper-meta">'+
+      (rating!==null?'<span>&#11088; avg '+rating.toFixed(2)+'</span>':'')+
+      (area?'<span>&#127991; '+area+'</span>':'')+
+      '</div></a></div>';
+  }).join("");
+
+  main.innerHTML =
+    '<div class="result-header"><h2>Results for '+kwLabel+'</h2>'+
+    '<span class="count-badge">'+totalTotal.toLocaleString()+' results across all years &middot; in '+fieldLabel+'</span></div>'+
+    statsHTML +
+    trendHTML +
+    '<div class="papers-section">'+
+      '<div class="paper-filter-row">'+
+        '<span class="paper-filter-label">Show:</span>'+
+        '<button class="pf-toggle active oral"      data-pf="oral"        onclick="togglePaperFilter(this)">Oral</button>'+
+        '<button class="pf-toggle active spotlight"  data-pf="spotlight"   onclick="togglePaperFilter(this)">Spotlight</button>'+
+        '<button class="pf-toggle active poster"    data-pf="poster"      onclick="togglePaperFilter(this)">Poster</button>'+
+        '<button class="pf-toggle reject"            data-pf="reject"      onclick="togglePaperFilter(this)">Reject</button>'+
+        '<button class="pf-toggle withdraw"          data-pf="withdraw"    onclick="togglePaperFilter(this)">Withdraw</button>'+
+        '<button class="pf-toggle withdraw"          data-pf="desk-reject" onclick="togglePaperFilter(this)">Desk Reject</button>'+
+      '</div>'+
+      '<h3 id="papers-count-label">Papers ('+sortedPapers.filter(function(p){var s=normalizeStatus(p.status).toLowerCase().replace(/\s+/g,'-');return s==='oral'||s==='spotlight'||s==='poster';}).length+' shown)</h3>'+
+      '<div id="papers-list">'+cardsHTML+'</div>'+
+    '</div>';
+}
 
 // ── Render ────────────────────────────────────────────────────────────────
 // ── Score histogram ─────────────────────────────────────────────────────
@@ -665,7 +1022,9 @@ function renderResults(papers, keywords, fields) {
   var oralPct   = accepted ? +(oral/accepted*100).toFixed(2)  : 0;
   var spotPct   = accepted ? (spotlight/accepted*100).toFixed(1) : "&mdash;";
 
-  recordSearch(keywords.join(" "), fields.join(","), total, accepted, acceptPct, oral, oralPct);
+  if (currentYear !== "all") {
+    recordSearch(keywords.join(" "), fields.join(","), total, accepted, acceptPct, oral, oralPct);
+  }
 
   var allSortedPapers = papers
     .slice()
@@ -766,35 +1125,14 @@ function renderResults(papers, keywords, fields) {
 var _activeScoreFilter = null;
 function filterByScore(score, colEl) {
   var isSame = _activeScoreFilter === score;
-  // Clear all selected bars
   document.querySelectorAll('.hist-bar-col.selected').forEach(function(el){ el.classList.remove('selected'); });
   if (isSame) {
-    // Toggle off: restore normal filter
     _activeScoreFilter = null;
-    applyPaperFilter();
-    var label = document.getElementById('papers-count-label');
-    if (label) {
-      var visible = document.querySelectorAll('#papers-list .paper-card:not([style*="display: none"])').length;
-      label.textContent = 'Papers (' + visible + ' shown)';
-    }
-    return;
+  } else {
+    _activeScoreFilter = score;
+    colEl.classList.add('selected');
   }
-  _activeScoreFilter = score;
-  colEl.classList.add('selected');
-
-  var cards = document.querySelectorAll('#papers-list .paper-card');
-  var shown = 0;
-  cards.forEach(function(c) {
-    // Get rating from data attribute we'll look up from allSortedPapers via DOM index
-    // Instead we match via the paper's displayed avg score in the meta
-    // We use a data-score attribute we'll add to each card
-    var cardScore = parseFloat(c.dataset.score);
-    var match = !isNaN(cardScore) && Math.round(cardScore * 2) / 2 === score;
-    c.style.display = match ? '' : 'none';
-    if (match) shown++;
-  });
-  var label = document.getElementById('papers-count-label');
-  if (label) label.textContent = 'Papers (' + shown + ' shown, score \u2248 ' + score + ')';
+  applyPaperFilter();
 }
 
 // ── Paper filter ─────────────────────────────────────────────────────────
@@ -803,22 +1141,28 @@ function togglePaperFilter(btn) {
   applyPaperFilter();
 }
 function applyPaperFilter() {
-  // If a score filter is active, don't override it — just clear it
-  if (_activeScoreFilter !== null) {
-    _activeScoreFilter = null;
-    document.querySelectorAll('.hist-bar-col.selected').forEach(function(el){ el.classList.remove('selected'); });
-  }
-  var active = new Set();
-  document.querySelectorAll(".pf-toggle.active").forEach(function(b){ active.add(b.dataset.pf); });
+  var activeStatuses = new Set();
+  document.querySelectorAll(".pf-toggle.active").forEach(function(b){ activeStatuses.add(b.dataset.pf); });
   var cards = document.querySelectorAll("#papers-list .paper-card");
   var visible = 0;
   cards.forEach(function(c) {
-    var show = active.has(c.dataset.status);
+    var statusOk = activeStatuses.has(c.dataset.status);
+    var scoreOk  = true;
+    if (_activeScoreFilter !== null) {
+      var cardScore = parseFloat(c.dataset.score);
+      scoreOk = !isNaN(cardScore) && Math.round(cardScore * 2) / 2 === _activeScoreFilter;
+    }
+    var show = statusOk && scoreOk;
     c.style.display = show ? "" : "none";
     if (show) visible++;
   });
   var label = document.getElementById("papers-count-label");
-  if (label) label.textContent = "Papers (" + visible + " shown)";
+  if (label) {
+    var txt = "Papers (" + visible + " shown";
+    if (_activeScoreFilter !== null) txt += ", score \u2248 " + _activeScoreFilter;
+    txt += ")";
+    label.textContent = txt;
+  }
 }
 
 // ── Boot ──────────────────────────────────────────────────────────────────
