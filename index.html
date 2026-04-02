@@ -152,6 +152,28 @@
     .lb-empty { text-align: center; color: var(--text2); font-size: 0.8rem; padding: 16px 0; }
     .lb-loading { text-align: center; padding: 14px; color: var(--text2); font-size: 0.8rem; }
 
+    /* Score histogram */
+    .score-hist-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 22px; margin-bottom: 24px; }
+    .score-hist-wrap h3 { font-size: 0.85rem; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 14px; }
+    .hist-chart { position: relative; }
+    .hist-bars { display: flex; align-items: flex-end; gap: 3px; height: 120px; padding-bottom: 0; }
+    .hist-bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; justify-content: flex-end; position: relative; cursor: default; }
+    .hist-bar-col:hover .hist-tooltip { display: block; }
+    .hist-bar-segments { width: 100%; display: flex; flex-direction: column-reverse; gap: 0; border-radius: 3px 3px 0 0; overflow: hidden; }
+    .hist-seg { width: 100%; transition: opacity 0.2s; }
+    .hist-seg.oral     { background: #fbbf24; }
+    .hist-seg.spotlight{ background: var(--accent2); }
+    .hist-seg.poster   { background: var(--green); }
+    .hist-seg.reject   { background: var(--red); opacity: 0.7; }
+    .hist-seg.withdraw { background: #64748b; opacity: 0.7; }
+    .hist-seg.other    { background: var(--border); opacity: 0.5; }
+    .hist-xlabel { font-size: 0.65rem; color: var(--text2); margin-top: 5px; }
+    .hist-axis { border-top: 1px solid var(--border); margin-top: 2px; position: relative; }
+    .hist-tooltip { display: none; position: absolute; bottom: calc(100% + 30px); left: 50%; transform: translateX(-50%); background: #1e2235; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; font-size: 0.73rem; white-space: nowrap; z-index: 10; pointer-events: none; color: var(--text); min-width: 90px; text-align: left; line-height: 1.7; }
+    .hist-legend { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+    .hist-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text2); }
+    .hist-legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
     /* Empty / footer */
     .empty { text-align: center; padding: 60px 20px; color: var(--text2); }
     .empty .icon { font-size: 3rem; margin-bottom: 12px; }
@@ -182,7 +204,7 @@
   <p>Search papers by keyword and instantly see acceptance rates, oral rates, and more.</p>
   <div class="hero-badges">
     <div class="badge">Submissions: <span id="total-badge">loading...</span></div>
-    <div class="badge pv">&#128065; Today: <span id="pv-today">...</span> &nbsp;&middot;&nbsp; Yesterday: <span id="pv-yesterday">...</span> &nbsp;&middot;&nbsp; Total: <span id="pv-total">...</span></div>
+    <div class="badge pv">&#128065; Total visits: <span id="pv-total">...</span></div>
   </div>
 </div>
 
@@ -321,12 +343,8 @@ async function fetchPvStats() {
 }
 
 function updatePvBadge(stats) {
-  var today     = stats.today_pv     != null ? stats.today_pv.toLocaleString()     : "0";
-  var yesterday = stats.yesterday_pv != null ? stats.yesterday_pv.toLocaleString() : "0";
-  var total     = stats.total_pv     != null ? stats.total_pv.toLocaleString()     : "0";
-  document.getElementById("pv-today").textContent     = today;
-  document.getElementById("pv-yesterday").textContent = yesterday;
-  document.getElementById("pv-total").textContent     = total;
+  var total = stats.total_pv != null ? stats.total_pv.toLocaleString() : "0";
+  document.getElementById("pv-total").textContent = total;
 }
 
 // ── Leaderboard state ─────────────────────────────────────────────────────
@@ -519,6 +537,90 @@ document.getElementById("query").addEventListener("keydown", function(e) {
 });
 
 // ── Render ────────────────────────────────────────────────────────────────
+// ── Score histogram ─────────────────────────────────────────────────────
+function buildScoreHistogram(papers) {
+  // Collect scores from rating_avg field
+  var statusSeg = {}; // score -> {oral, spotlight, poster, reject, withdraw, other}
+  var minScore = Infinity, maxScore = -Infinity;
+  papers.forEach(function(p) {
+    var rating = Array.isArray(p.rating_avg) ? p.rating_avg[0] : (typeof p.rating_avg === 'number' ? p.rating_avg : null);
+    if (rating === null || rating === undefined || isNaN(rating)) return;
+    var score = Math.floor(rating * 2) / 2; // bin by 0.5
+    if (score < minScore) minScore = score;
+    if (score > maxScore) maxScore = score;
+    var status = normalizeStatus(p.status).toLowerCase();
+    if (!statusSeg[score]) statusSeg[score] = {oral:0,spotlight:0,poster:0,reject:0,withdraw:0,other:0};
+    if (status === 'oral') statusSeg[score].oral++;
+    else if (status === 'spotlight') statusSeg[score].spotlight++;
+    else if (status === 'poster') statusSeg[score].poster++;
+    else if (status === 'reject') statusSeg[score].reject++;
+    else if (status === 'withdraw' || status === 'desk reject') statusSeg[score].withdraw++;
+    else statusSeg[score].other++;
+  });
+  if (Object.keys(statusSeg).length === 0) return '';
+
+  // Build bins
+  var bins = [];
+  for (var s = minScore; s <= maxScore; s += 0.5) {
+    var key = Math.round(s * 2) / 2;
+    var seg = statusSeg[key] || {oral:0,spotlight:0,poster:0,reject:0,withdraw:0,other:0};
+    var total = seg.oral + seg.spotlight + seg.poster + seg.reject + seg.withdraw + seg.other;
+    bins.push({score: key, total: total, seg: seg});
+  }
+
+  var maxCount = Math.max.apply(null, bins.map(function(b){return b.total;}));
+  if (maxCount === 0) return '';
+
+  var barsHTML = bins.map(function(b) {
+    var heightPct = maxCount > 0 ? (b.total / maxCount * 100) : 0;
+    var segs = [
+      {cls:'oral',      count: b.seg.oral},
+      {cls:'spotlight', count: b.seg.spotlight},
+      {cls:'poster',    count: b.seg.poster},
+      {cls:'reject',    count: b.seg.reject},
+      {cls:'withdraw',  count: b.seg.withdraw},
+      {cls:'other',     count: b.seg.other},
+    ].filter(function(x){return x.count>0;});
+
+    var segHTML = segs.map(function(x) {
+      var h = (x.count / maxCount * 100).toFixed(1);
+      return '<div class="hist-seg ' + x.cls + '" style="height:' + h + 'px"></div>';
+    }).join('');
+
+    // tooltip
+    var tipLines = ['<b>' + b.score + ' pts</b> (' + b.total + ')',];
+    if (b.seg.oral) tipLines.push('Oral: ' + b.seg.oral);
+    if (b.seg.spotlight) tipLines.push('Spotlight: ' + b.seg.spotlight);
+    if (b.seg.poster) tipLines.push('Poster: ' + b.seg.poster);
+    if (b.seg.reject) tipLines.push('Reject: ' + b.seg.reject);
+    if (b.seg.withdraw) tipLines.push('Withdraw: ' + b.seg.withdraw);
+    var tipHTML = tipLines.join('<br>');
+
+    return '<div class="hist-bar-col">' +
+      '<div class="hist-bar-segments" style="height:120px">' + segHTML + '</div>' +
+      '<div class="hist-xlabel">' + b.score + '</div>' +
+      '<div class="hist-tooltip">' + tipHTML + '</div>' +
+    '</div>';
+  }).join('');
+
+  var legendHTML = [
+    {cls:'oral',      color:'#fbbf24',         label:'Oral'},
+    {cls:'spotlight', color:'var(--accent2)',   label:'Spotlight'},
+    {cls:'poster',    color:'var(--green)',     label:'Poster'},
+    {cls:'reject',    color:'var(--red)',       label:'Reject'},
+    {cls:'withdraw',  color:'#64748b',          label:'Withdraw'},
+  ].map(function(l){
+    return '<div class="hist-legend-item"><div class="hist-legend-dot" style="background:' + l.color + '"></div>' + l.label + '</div>';
+  }).join('');
+
+  return '<div class="score-hist-wrap">' +
+    '<h3>Score Distribution (' + papers.length + ' papers with ratings)</h3>' +
+    '<div class="hist-chart"><div class="hist-bars">' + barsHTML + '</div>' +
+    '<div class="hist-axis"></div></div>' +
+    '<div class="hist-legend">' + legendHTML + '</div>' +
+  '</div>';
+}
+
 function renderResults(papers, keywords, fields) {
   var main = document.getElementById("main");
   if (!papers.length) {
@@ -589,6 +691,8 @@ function renderResults(papers, keywords, fields) {
   var kwLabel    = keywords.map(function(k){ return '"'+k+'"'; }).join(" or ");
   var fieldLabel = fields.join(" + ");
 
+  var histHTML = buildScoreHistogram(papers);
+
   main.innerHTML =
     '<div class="result-header">' +
       '<h2>Results for ' + kwLabel + '</h2>' +
@@ -601,6 +705,7 @@ function renderResults(papers, keywords, fields) {
       '<div class="stat-card reject"><div class="label">Reject</div><div class="value">' + pct(reject) + '</div><div class="sub">' + reject + ' papers</div></div>' +
       '<div class="stat-card withdraw"><div class="label">Withdraw</div><div class="value">' + pct(withdraw) + '</div><div class="sub">' + withdraw + ' + ' + desk + ' desk reject</div></div>' +
     '</div>' +
+    histHTML +
     '<div class="breakdown"><h3>Status Breakdown</h3>' + barsHTML + '</div>' +
     (acceptedPapers.length>0?'<div class="papers-section"><h3>Accepted Papers (' + acceptedPapers.length + ')</h3>' + cardsHTML + '</div>':"");
 }
