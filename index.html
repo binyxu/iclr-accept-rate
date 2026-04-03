@@ -390,6 +390,8 @@ let lbL2 = "all";
 let lbL3 = "high";
 let lbMinTotal  = 80;
 let lbShowCount = 10;
+let _lastMatchers = null;   // cached for re-render on sort/filter change in multi-year mode
+let _lastFields   = null;
 
 // ── Data ─────────────────────────────────────────────────────────────────
 async function loadYearData(year) {
@@ -440,6 +442,8 @@ async function setYear(year) {
     if (rightCol) rightCol.style.display = "";
     var lbYearBadge = document.getElementById("lb-year-badge");
     if (lbYearBadge) lbYearBadge.textContent = cfg.range;
+    _lastMatchers = null;
+    _lastFields   = null;
     renderMultiYearLbPlaceholder();
     var lbSub = document.getElementById('lb-subtitle');
     if (lbSub) lbSub.textContent = 'Avg acceptance rates across ' + cfg.range;
@@ -608,6 +612,12 @@ function renderLb() {
   var body       = document.getElementById("lb-body");
   var expandWrap = document.getElementById("lb-expand-wrap");
   function clearExpand() { if (expandWrap) expandWrap.innerHTML = ""; }
+
+  // Multi-year modes use renderMultiYearLb exclusively; renderLb is single-year only
+  if (currentYear === "3y" || currentYear === "5y") {
+    if (_lastMatchers) renderMultiYearLb(_lastMatchers, _lastFields);
+    return;
+  }
 
   if (!LB_DATA) { body.innerHTML = '<div class="lb-loading"><span class="spinner"></span></div>'; clearExpand(); return; }
 
@@ -804,8 +814,9 @@ function renderMultiYearLb(matchers, fields) {
 
 async function fetchLeaderboard() {
   if (currentYear === "3y" || currentYear === "5y") {
-    // Multi-year: load from backend (will have data after first search records it)
-    fetchMultiYearLeaderboard();
+    // Multi-year: computed locally from YEAR_PAPERS in renderMultiYearLb after each search.
+    // Show placeholder until user searches.
+    renderMultiYearLbPlaceholder();
     return;
   }
   if (currentYear === "all") return;
@@ -1209,6 +1220,8 @@ function renderResultsAll(papers, yearStats, keywords, fields, matchers) {
       '<div id="papers-list">'+cardsHTML+'</div>'+
     '</div>';
   if (matchers) {
+    _lastMatchers = matchers;
+    _lastFields   = fields;
     renderMultiYearLb(matchers, fields);
     // Record each year's stats to backend (fire-and-forget)
     recordMultiYearSearch(matchers, fields, yearStats);
