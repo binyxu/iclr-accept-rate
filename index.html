@@ -75,6 +75,8 @@
     .search-input { flex: 1; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); font-size: 1rem; padding: 14px 18px; outline: none; transition: border-color 0.2s; }
     .search-input:focus { border-color: var(--accent); }
     .search-input::placeholder { color: var(--text2); }
+    .search-hint { font-size: 0.72rem; color: var(--text2); margin: -8px 0 10px; opacity: 0.75; }
+    .search-hint code { background: var(--surface2); border-radius: 3px; padding: 1px 4px; font-size: 0.7rem; color: var(--accent2); }
     .search-btn { background: var(--accent); border: none; border-radius: var(--radius); color: #fff; cursor: pointer; font-size: 1rem; font-weight: 600; padding: 14px 28px; transition: opacity 0.15s, transform 0.1s; white-space: nowrap; }
     .search-btn:hover { opacity: 0.88; }
     .search-btn:active { transform: scale(0.97); }
@@ -283,9 +285,10 @@
     <div class="search-wrap">
       <div class="search-row">
         <input class="search-input" id="query" type="text"
-          placeholder='e.g.  attack, large language model, diffusion' autofocus />
+          placeholder='e.g.  diffusion, /symbolic.regression|function.discovery/' autofocus />
         <button class="search-btn" onclick="doSearch()">Search</button>
       </div>
+      <div class="search-hint">Comma = OR &nbsp;&middot;&nbsp; <code>/regex/</code> supported &nbsp;&middot;&nbsp; e.g. <code>diffusion, /symbolic.reg|function.disc/i</code></div>
       <div class="field-row">
         <span class="field-label">Search in:</span>
         <button class="field-toggle active" data-field="title"    onclick="toggleField(this)">Title</button>
@@ -693,10 +696,29 @@ function normalizeStatus(raw) {
   for (var j=0; j<STATUS_ORDER.length; j++) if (low.indexOf(STATUS_ORDER[j].toLowerCase())>=0) return STATUS_ORDER[j];
   return raw.trim();
 }
+// Parse a query token into a matcher function.
+// Supports: plain string (case-insensitive indexOf) or /regex/flags.
+function parseQueryToken(token) {
+  var t = token.trim();
+  var m = t.match(/^\/(.+)\/([gimsuy]*)$/);
+  if (m) {
+    try {
+      var re = new RegExp(m[1], m[2] || 'i');
+      return { label: t, test: function(text){ return re.test(text); } };
+    } catch(e) {
+      // Invalid regex: fall through to plain string
+    }
+  }
+  var lower = t.toLowerCase();
+  return { label: t, test: function(text){ return text.indexOf(lower) >= 0; } };
+}
+
 function doSearch() {
   var raw = document.getElementById("query").value.trim();
   if (!raw) return;
-  var keywords = raw.split(",").map(function(k){ return k.trim().toLowerCase(); }).filter(Boolean);
+  // Split on commas, then parse each token (supports /regex/ syntax)
+  var matchers = raw.split(",").map(function(k){ return parseQueryToken(k); }).filter(function(m){ return m.label; });
+  var keywords = matchers.map(function(m){ return m.label; }); // for display / record
   var fields   = getActiveFields();
 
   if (currentYear === "3y" || currentYear === "5y") {
@@ -710,7 +732,7 @@ function doSearch() {
       var papers = YEAR_PAPERS[y] || [];
       var matched = papers.filter(function(p) {
         var text = fields.map(function(f){ return p[f]||""; }).join(" ").toLowerCase();
-        return keywords.some(function(kw){ return text.indexOf(kw)>=0; });
+        return matchers.some(function(m){ return m.test(text); });
       });
       // Tag each paper with year
       matched.forEach(function(p){ p._year = y; });
@@ -733,7 +755,7 @@ function doSearch() {
     if (!ALL_PAPERS) { alert("Data still loading, please wait."); return; }
     var matched = ALL_PAPERS.filter(function(p) {
       var text = fields.map(function(f){ return p[f]||""; }).join(" ").toLowerCase();
-      return keywords.some(function(kw){ return text.indexOf(kw)>=0; });
+      return matchers.some(function(m){ return m.test(text); });
     });
     renderResults(matched, keywords, fields);
   }
