@@ -732,7 +732,7 @@ function renderMultiYearLb(matchers, fields) {
         return m.test(text);
       });
       var total = matched.length;
-      if (total < lbMinTotal) return; // skip years below threshold
+      if (total === 0) return;
       var accepted = 0, oral = 0;
       matched.forEach(function(p) {
         var st = normalizeStatus(p.status || '');
@@ -745,6 +745,8 @@ function renderMultiYearLb(matchers, fields) {
     var sumTotal    = yearData.reduce(function(s,d){ return s + d.total;    }, 0);
     var sumAccepted = yearData.reduce(function(s,d){ return s + d.accepted; }, 0);
     var sumOral     = yearData.reduce(function(s,d){ return s + d.oral;     }, 0);
+    // Apply threshold on pooled total, not per-year
+    if (sumTotal < lbMinTotal) return null;
     return {
       keyword:    m.label,
       years:      yearData,
