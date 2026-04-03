@@ -307,7 +307,7 @@
     <div class="leaderboard">
       <div class="lb-header">
         <h2>&#127942; Search Leaderboard <span id="lb-year-badge" style="font-size:0.7rem;font-weight:600;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:2px 8px;color:var(--accent);vertical-align:middle;margin-left:4px">2026</span></h2>
-        <p>Funniest acceptance rates found so far</p>
+        <p id="lb-subtitle">Funniest acceptance rates found so far</p>
         <div class="lb-min-note" id="lb-min-note">Only keywords with &ge;80 matching papers count</div>
         <div class="lb-min-controls">
           <span style="font-size:0.68rem;color:var(--text2);">Min:</span>
@@ -437,7 +437,12 @@ async function setYear(year) {
     ALL_YEARS = cfg.years;
     heroTitle.textContent = "ICLR " + cfg.range + " Paper Stats";
     document.title = "ICLR " + cfg.label + " Paper Stats";
-    if (rightCol) rightCol.style.display = "none";
+    if (rightCol) rightCol.style.display = "";
+    var lbYearBadge = document.getElementById("lb-year-badge");
+    if (lbYearBadge) lbYearBadge.textContent = cfg.range;
+    renderMultiYearLbPlaceholder();
+    var lbSub = document.getElementById('lb-subtitle');
+    if (lbSub) lbSub.textContent = 'Avg acceptance rates across ' + cfg.range;
     document.getElementById("total-badge").textContent = "loading...";
     if (loadingEl) loadingEl.innerHTML = '<span class="spinner"></span> Loading ' + cfg.range + '...';
     statusEl.innerHTML = '<span class="spinner"></span> Loading ' + cfg.range + '...';
@@ -464,6 +469,8 @@ async function setYear(year) {
     if (rightCol) rightCol.style.display = "";
     var lbYearBadge = document.getElementById("lb-year-badge");
     if (lbYearBadge) lbYearBadge.textContent = year;
+    var lbSub = document.getElementById('lb-subtitle');
+    if (lbSub) lbSub.textContent = 'Funniest acceptance rates found so far';
     if (loadingEl) loadingEl.textContent = "";
 
     if (YEAR_PAPERS[year]) {
@@ -529,6 +536,9 @@ function setL1(val) {
   });
   document.getElementById("lb-l3-wrap").style.display = "flex";
   lbShowCount = 10;
+  if (currentYear === '3y' || currentYear === '5y') {
+    _myLbSort = lbL1 + '_' + lbL3;
+  }
   renderLb();
 }
 
@@ -548,6 +558,9 @@ function setL3(val) {
     t.classList.toggle("active", (isHigh && val==="high") || (!isHigh && val==="low"));
   });
   lbShowCount = 10;
+  if (currentYear === '3y' || currentYear === '5y') {
+    _myLbSort = lbL1 + '_' + lbL3;
+  }
   renderLb();
 }
 
@@ -635,8 +648,101 @@ function renderLb() {
   }
 }
 
+// ── Multi-year local leaderboard ──────────────────────────────────────────
+var _myLbSort = 'accept_high'; // accept_high | accept_low | oral_high | oral_low
+
+function renderMultiYearLbPlaceholder() {
+  var body = document.getElementById('lb-body');
+  var expandWrap = document.getElementById('lb-expand-wrap');
+  if (body) body.innerHTML = '<div class="lb-empty" style="opacity:0.7">Search a keyword to see<br>multi-year avg rankings.</div>';
+  if (expandWrap) expandWrap.innerHTML = '';
+}
+
+function renderMultiYearLb(matchers, fields) {
+  var body = document.getElementById('lb-body');
+  var expandWrap = document.getElementById('lb-expand-wrap');
+  if (!body) return;
+
+  // For each keyword × each year, compute stats from YEAR_PAPERS
+  // matchers is array of {label, test}
+  // We build a per-keyword record: { keyword, years: [{year, total, accepted, oral}], avgAccept, avgOral }
+  var kwRecords = matchers.map(function(m) {
+    var yearData = [];
+    ALL_YEARS.forEach(function(y) {
+      var papers = YEAR_PAPERS[y] || [];
+      var matched = papers.filter(function(p) {
+        var text = fields.map(function(f){ return p[f]||''; }).join(' ').toLowerCase();
+        return m.test(text);
+      });
+      var total = matched.length;
+      if (total < lbMinTotal) return; // skip years below threshold
+      var accepted = 0, oral = 0;
+      matched.forEach(function(p) {
+        var st = normalizeStatus(p.status || '');
+        if (st === 'Oral' || st === 'Spotlight' || st === 'Poster') accepted++;
+        if (st === 'Oral') oral++;
+      });
+      yearData.push({ year: y, total: total, accepted: accepted, oral: oral });
+    });
+    if (yearData.length === 0) return null;
+    var sumAccept = yearData.reduce(function(s,d){ return s + d.accepted/d.total*100; }, 0);
+    var sumOral   = yearData.reduce(function(s,d){ return s + (d.accepted>0 ? d.oral/d.accepted*100 : 0); }, 0);
+    return {
+      keyword:    m.label,
+      years:      yearData,
+      avgAccept:  +(sumAccept / yearData.length).toFixed(1),
+      avgOral:    +(sumOral   / yearData.length).toFixed(1),
+      nYears:     yearData.length
+    };
+  }).filter(Boolean);
+
+  if (kwRecords.length === 0) {
+    body.innerHTML = '<div class="lb-empty">No results meet min=' + lbMinTotal + ' threshold.</div>';
+    if (expandWrap) expandWrap.innerHTML = '';
+    return;
+  }
+
+  // Sort
+  var sorted = kwRecords.slice().sort(function(a, b) {
+    if (_myLbSort === 'accept_high') return b.avgAccept - a.avgAccept;
+    if (_myLbSort === 'accept_low')  return a.avgAccept - b.avgAccept;
+    if (_myLbSort === 'oral_high')   return b.avgOral   - a.avgOral;
+    if (_myLbSort === 'oral_low')    return a.avgOral   - b.avgOral;
+    return 0;
+  });
+
+  var medals = ['&#127945;','&#129352;','&#129353;'];
+  var isOral = _myLbSort.indexOf('oral') >= 0;
+  var isHigh = _myLbSort.indexOf('high') >= 0;
+
+  function makeRow(r, i) {
+    var rank   = medals[i] || (i+1);
+    var pct    = isOral ? r.avgOral : r.avgAccept;
+    var kw     = r.keyword.length > 20 ? r.keyword.slice(0,18)+'...' : r.keyword;
+    var pctCls = isOral ? 'oral' : (isHigh ? 'high' : 'low');
+    var sub    = 'avg over ' + r.nYears + ' yr' + (r.nYears>1?'s':'');
+    var kwSafe = r.keyword.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    return '<div class="lb-row" onclick="fillSearch(\'' + kwSafe + "'," + "'" + fields.join(',') + "'" + ')">' +
+      '<div class="lb-rank">' + rank + '</div>' +
+      '<div class="lb-info"><div class="lb-kw">' + kw + '</div>' +
+      '<div class="lb-sub">' + sub + '</div></div>' +
+      '<div class="lb-pct ' + pctCls + '">' + pct.toFixed(1) + '%</div>' +
+      '</div>';
+  }
+
+  body.innerHTML = sorted.slice(0, lbShowCount).map(makeRow).join('');
+
+  if (expandWrap) {
+    if (sorted.length > lbShowCount) {
+      expandWrap.innerHTML = '<div class="lb-expand-btn" onclick="expandLb()">Show more (' + sorted.length + ' total)</div>';
+    } else {
+      expandWrap.innerHTML = '';
+    }
+  }
+}
+
 async function fetchLeaderboard() {
-  if (currentYear === "all") return;   // leaderboard hidden in ALL mode
+  if (currentYear === "3y" || currentYear === "5y" || currentYear === "all") return;
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("YOUR_") === 0) {
     document.getElementById("lb-body").innerHTML =
       '<div class="lb-empty">&#9881; Configure Apps Script URL to enable.</div>';
@@ -773,7 +879,7 @@ function doSearch() {
       });
       allMatchedPapers = allMatchedPapers.concat(matched);
     });
-    renderResultsAll(allMatchedPapers, yearStats, keywords, fields);
+    renderResultsAll(allMatchedPapers, yearStats, keywords, fields, matchers);
   } else {
     if (!ALL_PAPERS) { alert("Data still loading, please wait."); return; }
     var matched = ALL_PAPERS.filter(function(p) {
@@ -920,7 +1026,7 @@ function hideTrendTip() {
 var _allYearPapers = {};       // { 2024: [...], 2025: [...], 2026: [...] } for current search
 var _allHistYear   = 'all';    // which year's histogram to show
 
-function renderResultsAll(papers, yearStats, keywords, fields) {
+function renderResultsAll(papers, yearStats, keywords, fields, matchers) {
   var main = document.getElementById("main");
   var totalMatched = papers.length;
   if (totalMatched === 0) {
@@ -1036,6 +1142,7 @@ function renderResultsAll(papers, yearStats, keywords, fields) {
       '<h3 id="papers-count-label">Papers ('+initShown+' shown)</h3>'+
       '<div id="papers-list">'+cardsHTML+'</div>'+
     '</div>';
+  if (matchers) renderMultiYearLb(matchers, fields);
 }
 
 function switchHistYear(btn, year) {
