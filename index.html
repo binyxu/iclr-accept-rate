@@ -648,7 +648,46 @@ function renderLb() {
   }
 }
 
-// ── Multi-year local leaderboard ──────────────────────────────────────────
+// ── Multi-year record + leaderboard ───────────────────────────────────────
+// Fire-and-forget: record each year's stats to backend, then refresh lb from backend
+async function recordMultiYearSearch(matchers, fields, yearStats) {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf('YOUR_') === 0) return;
+  var fieldsStr = fields.join(',');
+  var kwLabel   = matchers.map(function(m){ return m.label; }).join(' ');
+  try {
+    var tasks = [];
+    yearStats.forEach(function(d) {
+      var total    = d.total;
+      var accepted = d.accepted;
+      var oral     = d.oral;
+      if (total === 0) return;
+      var acceptPct = +(accepted / total * 100).toFixed(2);
+      var oralPct   = accepted ? +(oral / accepted * 100).toFixed(2) : 0;
+      var p = new URLSearchParams({
+        action: 'record', keyword: kwLabel, fields: fieldsStr,
+        year: d.year, total: total, accepted: accepted,
+        accept_pct: acceptPct, oral: oral, oral_pct: oralPct
+      });
+      tasks.push(fetch(APPS_SCRIPT_URL + '?' + p.toString()).catch(function(){}));
+    });
+    await Promise.all(tasks);
+    // After recording all years, refresh leaderboard from backend for the multi-year range
+    fetchMultiYearLeaderboard();
+  } catch(_) {}
+}
+
+async function fetchMultiYearLeaderboard() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf('YOUR_') === 0) return;
+  try {
+    var resp = await fetch(APPS_SCRIPT_URL + '?action=leaderboard&min_total=' + lbMinTotal + '&year=' + currentYear);
+    var data = await resp.json();
+    if (data.ok && data.leaderboards) {
+      LB_DATA = data;
+      renderLb();
+    }
+  } catch(_) {}
+}
+
 var _myLbSort = 'accept_high'; // accept_high | accept_low | oral_high | oral_low
 
 function renderMultiYearLbPlaceholder() {
@@ -742,7 +781,12 @@ function renderMultiYearLb(matchers, fields) {
 }
 
 async function fetchLeaderboard() {
-  if (currentYear === "3y" || currentYear === "5y" || currentYear === "all") return;
+  if (currentYear === "3y" || currentYear === "5y") {
+    // Multi-year: load from backend (will have data after first search records it)
+    fetchMultiYearLeaderboard();
+    return;
+  }
+  if (currentYear === "all") return;
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("YOUR_") === 0) {
     document.getElementById("lb-body").innerHTML =
       '<div class="lb-empty">&#9881; Configure Apps Script URL to enable.</div>';
@@ -1142,7 +1186,11 @@ function renderResultsAll(papers, yearStats, keywords, fields, matchers) {
       '<h3 id="papers-count-label">Papers ('+initShown+' shown)</h3>'+
       '<div id="papers-list">'+cardsHTML+'</div>'+
     '</div>';
-  if (matchers) renderMultiYearLb(matchers, fields);
+  if (matchers) {
+    renderMultiYearLb(matchers, fields);
+    // Record each year's stats to backend (fire-and-forget)
+    recordMultiYearSearch(matchers, fields, yearStats);
+  }
 }
 
 function switchHistYear(btn, year) {
