@@ -33,10 +33,10 @@
     .badge.pv span { color: var(--accent2); }
 
     /* GitHub Star button */
-    .gh-star-btn { position: fixed; top: 14px; right: 16px; z-index: 999; display: flex; align-items: center; gap: 7px; background: var(--surface2); border: 1.5px solid #fbbf24; border-radius: 20px; color: #fbbf24; text-decoration: none; font-size: 0.85rem; font-weight: 700; padding: 7px 16px 7px 12px; transition: all 0.15s; box-shadow: 0 2px 10px rgba(251,191,36,0.25); }
-    .gh-star-btn:hover { border-color: #fbbf24; color: #fff; background: rgba(251,191,36,0.18); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(251,191,36,0.4); }
+    .gh-star-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--surface2); border: 1.5px solid #fbbf24; border-radius: 20px; color: #fbbf24; text-decoration: none; font-size: 0.78rem; font-weight: 700; padding: 4px 13px 4px 10px; transition: all 0.15s; box-shadow: 0 2px 8px rgba(251,191,36,0.2); }
+    .gh-star-btn:hover { color: #fff; background: rgba(251,191,36,0.18); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(251,191,36,0.4); }
     .gh-star-btn svg { flex-shrink: 0; }
-    @media (max-width: 500px) { .gh-star-btn { top: 8px; right: 8px; padding: 5px 10px 5px 8px; font-size: 0.72rem; } }
+    .gh-star-count { font-weight: 700; }
     .year-selector { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-top: 16px; padding: 0 24px; }
     .year-tab { background: var(--surface2); border: 1.5px solid var(--border); border-radius: 20px; color: var(--text2); cursor: pointer; font-size: 0.82rem; font-weight: 600; padding: 5px 14px; transition: all 0.15s; user-select: none; }
     .year-tab:hover:not(.active) { border-color: var(--accent); color: var(--text); }
@@ -253,10 +253,6 @@
 </head>
 <body>
 
-<a class="gh-star-btn" href="https://github.com/binyxu/iclr-accept-rate" target="_blank" rel="noopener" title="Star on GitHub">
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="#fbbf24"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
-  Star
-</a>
 
 <div class="hero">
   <h1 id="hero-title">ICLR 2026 Paper Stats</h1>
@@ -264,6 +260,10 @@
   <div class="hero-badges">
     <div class="badge">Submissions: <span id="total-badge">loading...</span></div>
     <div class="badge pv">&#128065; Total visits: <span id="pv-total">...</span></div>
+    <a class="gh-star-btn" id="gh-star-btn" href="https://github.com/binyxu/iclr-accept-rate" target="_blank" rel="noopener" title="Star on GitHub">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="#fbbf24"><path d="M8 .25a.75.75 0 0 1 .673.418l1.882 3.815 4.21.612a.75.75 0 0 1 .416 1.279l-3.046 2.97.719 4.192a.75.75 0 0 1-1.088.791L8 12.347l-3.766 1.98a.75.75 0 0 1-1.088-.79l.72-4.194L.818 6.374a.75.75 0 0 1 .416-1.28l4.21-.611L7.327.668A.75.75 0 0 1 8 .25Z"/></svg>
+      Star <span class="gh-star-count" id="gh-star-count"></span>
+    </a>
   </div>
   <div class="year-selector">
     <button class="year-tab" data-year="2020" onclick="setYear(2020)">2020</button>
@@ -512,6 +512,9 @@ async function recordPageView() {
   } catch(_) {}
 }
 
+// Kick off GitHub star fetch once on load (independent of PV)
+fetchGithubStars();
+
 async function fetchPvStats() {
   if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.indexOf("YOUR_") === 0) return;
   try {
@@ -526,6 +529,21 @@ async function fetchPvStats() {
 function updatePvBadge(stats) {
   var total = stats.total_pv != null ? stats.total_pv.toLocaleString() : "0";
   document.getElementById("pv-total").textContent = total;
+}
+
+async function fetchGithubStars() {
+  try {
+    var resp = await fetch("https://api.github.com/repos/binyxu/iclr-accept-rate", {
+      headers: { "Accept": "application/vnd.github+json" }
+    });
+    if (!resp.ok) return;
+    var data = await resp.json();
+    var stars = data.stargazers_count;
+    if (stars != null) {
+      var el = document.getElementById("gh-star-count");
+      if (el) el.textContent = stars >= 1000 ? (stars/1000).toFixed(1)+"k" : stars;
+    }
+  } catch(_) {}
 }
 
 // ── Leaderboard state ─────────────────────────────────────────────────────
