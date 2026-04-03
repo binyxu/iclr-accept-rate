@@ -57,7 +57,7 @@
     .trend-svg-wrap svg { width: 100%; overflow: visible; }
     .trend-dot { cursor: pointer; transition: r 0.1s; }
     .trend-dot:hover { r: 5; }
-    .trend-hover-box { position: absolute; pointer-events: none; background: #1e2235; border: 1px solid var(--border); border-radius: 8px; padding: 7px 11px; font-size: 0.73rem; color: var(--text); line-height: 1.8; white-space: nowrap; z-index: 20; display: none; }
+    .trend-hover-box { position: fixed; pointer-events: none; background: #1e2235; border: 1px solid var(--border); border-radius: 8px; padding: 7px 11px; font-size: 0.73rem; color: var(--text); line-height: 1.8; white-space: nowrap; z-index: 9999; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
     .trend-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px; }
     .trend-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text2); cursor: pointer; user-select: none; }
     .trend-legend-item.hidden { opacity: 0.35; }
@@ -839,9 +839,8 @@ function buildTrendCard(yearStats, keywords) {
 
   return '<div class="trend-card">' +
     '<h3>Year-over-Year Trend for ' + kwLabel + '</h3>' +
-    '<div class="trend-svg-wrap">' +
+      '<div class="trend-svg-wrap">' +
       '<svg viewBox="0 0 '+W+' '+H+'" style="height:'+H+'px">' + svgContent + '</svg>' +
-      '<div class="trend-hover-box" id="trend-hover-box"></div>' +
     '</div>' +
     '<div class="trend-legend">' + legendHTML + '</div>' +
   '</div>';
@@ -863,7 +862,12 @@ function toggleTrendLine(key) {
 
 function showTrendTip(event, year, d) {
   var box = document.getElementById('trend-hover-box');
-  if (!box) return;
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'trend-hover-box';
+    box.className = 'trend-hover-box';
+    document.body.appendChild(box);
+  }
   var poster = d.accepted - d.oral - d.spotlight;
   box.innerHTML =
     '<b>ICLR ' + year + '</b><br>' +
@@ -872,15 +876,17 @@ function showTrendTip(event, year, d) {
     '&nbsp;&nbsp;Oral: ' + d.oral + ' (' + d.oralPct + '%)<br>' +
     '&nbsp;&nbsp;Spotlight: ' + d.spotlight + ' (' + d.spotPct + '%)<br>' +
     '&nbsp;&nbsp;Poster: ' + poster;
-  var svg = box.parentElement.querySelector('svg');
-  var rect = svg.getBoundingClientRect();
-  var ex = event.clientX - rect.left;
-  var ey = event.clientY - rect.top;
-  var left = ex + 12;
-  if (left + 170 > rect.width) left = ex - 180;
-  box.style.left = left + 'px';
-  box.style.top  = (ey - 10) + 'px';
+  var vw = window.innerWidth;
+  var vh = window.innerHeight;
+  var x = event.clientX + 14;
+  var y = event.clientY - 10;
   box.style.display = 'block';
+  var bw = box.offsetWidth;
+  var bh = box.offsetHeight;
+  if (x + bw > vw - 8) x = event.clientX - bw - 14;
+  if (y + bh > vh - 8) y = vh - bh - 8;
+  box.style.left = x + 'px';
+  box.style.top  = y + 'px';
 }
 function hideTrendTip() {
   var box = document.getElementById('trend-hover-box');
