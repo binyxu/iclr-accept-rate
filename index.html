@@ -285,10 +285,10 @@
     <div class="search-wrap">
       <div class="search-row">
         <input class="search-input" id="query" type="text"
-          placeholder='e.g.  diffusion, /symbolic.regression|function.discovery/' autofocus />
+          placeholder='e.g.  diffusion AND generation, symbolic regression OR function discovery' autofocus />
         <button class="search-btn" onclick="doSearch()">Search</button>
       </div>
-      <div class="search-hint">Comma = OR &nbsp;&middot;&nbsp; <code>/regex/</code> supported &nbsp;&middot;&nbsp; e.g. <code>diffusion, /symbolic.reg|function.disc/i</code></div>
+      <div class="search-hint">Comma or <code>OR</code> = either term &nbsp;&middot;&nbsp; <code>AND</code> = both terms &nbsp;&middot;&nbsp; <code>/regex/</code> = advanced &nbsp;&middot;&nbsp; e.g. <code>diffusion AND generation, /symbolic.reg|equation.disc/</code></div>
       <div class="field-row">
         <span class="field-label">Search in:</span>
         <button class="field-toggle active" data-field="title"    onclick="toggleField(this)">Title</button>
@@ -696,28 +696,51 @@ function normalizeStatus(raw) {
   for (var j=0; j<STATUS_ORDER.length; j++) if (low.indexOf(STATUS_ORDER[j].toLowerCase())>=0) return STATUS_ORDER[j];
   return raw.trim();
 }
-// Parse a query token into a matcher function.
-// Supports: plain string (case-insensitive indexOf) or /regex/flags.
-function parseQueryToken(token) {
-  var t = token.trim();
+// Parse a single primitive token: plain string or /regex/flags.
+function parsePrimitive(tok) {
+  var t = tok.trim();
   var m = t.match(/^\/(.+)\/([gimsuy]*)$/);
   if (m) {
     try {
       var re = new RegExp(m[1], m[2] || 'i');
-      return { label: t, test: function(text){ return re.test(text); } };
-    } catch(e) {
-      // Invalid regex: fall through to plain string
-    }
+      return function(text){ return re.test(text); };
+    } catch(e) {}
   }
   var lower = t.toLowerCase();
-  return { label: t, test: function(text){ return text.indexOf(lower) >= 0; } };
+  return function(text){ return text.indexOf(lower) >= 0; };
+}
+
+// Parse one comma-segment which may contain AND / OR keywords.
+// Returns { label, test } where test(text) -> bool.
+function parseSegment(seg) {
+  var t = seg.trim();
+  if (!t) return null;
+  // Split on " OR " (case-insensitive) first
+  var orParts = t.split(/\s+OR\s+/i);
+  // Each OR-part may contain AND
+  var orTesters = orParts.map(function(orPart) {
+    var andParts = orPart.trim().split(/\s+AND\s+/i).map(function(s){ return s.trim(); }).filter(Boolean);
+    var andTesters = andParts.map(parsePrimitive);
+    // AND: all must match
+    return function(text) {
+      return andTesters.every(function(fn){ return fn(text); });
+    };
+  });
+  // OR: any must match
+  var label = t;
+  return {
+    label: label,
+    test: function(text) {
+      return orTesters.some(function(fn){ return fn(text); });
+    }
+  };
 }
 
 function doSearch() {
   var raw = document.getElementById("query").value.trim();
   if (!raw) return;
-  // Split on commas, then parse each token (supports /regex/ syntax)
-  var matchers = raw.split(",").map(function(k){ return parseQueryToken(k); }).filter(function(m){ return m.label; });
+  // Split on commas (each comma-segment is implicitly OR'd with others)
+  var matchers = raw.split(",").map(parseSegment).filter(Boolean);
   var keywords = matchers.map(function(m){ return m.label; }); // for display / record
   var fields   = getActiveFields();
 
