@@ -724,13 +724,15 @@ function renderMultiYearLb(matchers, fields) {
       yearData.push({ year: y, total: total, accepted: accepted, oral: oral });
     });
     if (yearData.length === 0) return null;
-    var sumAccept = yearData.reduce(function(s,d){ return s + d.accepted/d.total*100; }, 0);
-    var sumOral   = yearData.reduce(function(s,d){ return s + (d.accepted>0 ? d.oral/d.accepted*100 : 0); }, 0);
+    var sumTotal    = yearData.reduce(function(s,d){ return s + d.total;    }, 0);
+    var sumAccepted = yearData.reduce(function(s,d){ return s + d.accepted; }, 0);
+    var sumOral     = yearData.reduce(function(s,d){ return s + d.oral;     }, 0);
     return {
       keyword:    m.label,
       years:      yearData,
-      avgAccept:  +(sumAccept / yearData.length).toFixed(1),
-      avgOral:    +(sumOral   / yearData.length).toFixed(1),
+      avgAccept:  sumTotal    ? +(sumAccepted / sumTotal    * 100).toFixed(1) : 0,
+      avgOral:    sumAccepted ? +(sumOral     / sumAccepted * 100).toFixed(1) : 0,
+      sumTotal:   sumTotal,
       nYears:     yearData.length
     };
   }).filter(Boolean);
@@ -759,7 +761,7 @@ function renderMultiYearLb(matchers, fields) {
     var pct    = isOral ? r.avgOral : r.avgAccept;
     var kw     = r.keyword.length > 20 ? r.keyword.slice(0,18)+'...' : r.keyword;
     var pctCls = isOral ? 'oral' : (isHigh ? 'high' : 'low');
-    var sub    = 'avg over ' + r.nYears + ' yr' + (r.nYears>1?'s':'');
+    var sub    = r.sumTotal + ' papers, ' + r.nYears + 'yr avg';
     var kwSafe = r.keyword.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     return '<div class="lb-row" onclick="fillSearch(\'' + kwSafe + "'," + "'" + fields.join(',') + "'" + ')">' +
       '<div class="lb-rank">' + rank + '</div>' +
